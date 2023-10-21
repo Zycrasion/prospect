@@ -1,4 +1,4 @@
-use winit::{event_loop::{EventLoop, self}, window::{Window, WindowBuilder}, dpi::{PhysicalSize, Size}};
+use winit::{event_loop::EventLoop, window::{Window, WindowBuilder}, dpi::{PhysicalSize, Size}};
 
 pub struct GraphicsContext;
 

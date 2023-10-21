@@ -1,2 +1,2 @@
 pub mod graphics_context;
-pub mod window;
+pub mod prospect_window;
