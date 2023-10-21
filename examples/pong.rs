@@ -1,4 +1,5 @@
-use prospect::{abstraction::prospect_window::ProspectWindow, prospect_app::ProspectApp};
+use prospect::{abstraction::prospect_window::ProspectWindow, prospect_app::{ProspectApp, ProcessResponse, PropsectEvent}};
+use winit::event::VirtualKeyCode;
 
 fn main()
 {
@@ -19,7 +20,13 @@ impl ProspectApp for PongApp
         
     }
 
-    fn process(&mut self, event : prospect::prospect_app::PropsectEvent) {
+    fn process(&mut self, event : PropsectEvent) -> ProcessResponse {
         
+        if event.key == Some(VirtualKeyCode::W)
+        {
+            return ProcessResponse::CloseApp
+        }
+
+        ProcessResponse::DontProcess        
     }
 }

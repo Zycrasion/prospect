@@ -1,7 +1,18 @@
-use crate::abstraction::graphics_context::GraphicsContext;
+use winit::event::VirtualKeyCode;
 
 #[derive(Clone, Copy)]
-pub struct PropsectEvent;
+pub struct PropsectEvent
+{
+    pub key : Option<VirtualKeyCode>
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum ProcessResponse
+{
+    CloseApp,
+    ProspectProcess,
+    DontProcess,
+}
 
 pub trait ProspectApp
 {
@@ -9,5 +20,8 @@ pub trait ProspectApp
     
     fn draw(&mut self);
 
-    fn process(&mut self, event : PropsectEvent);
+    fn process(&mut self, event : PropsectEvent) -> ProcessResponse
+    {
+        ProcessResponse::ProspectProcess
+    }
 }

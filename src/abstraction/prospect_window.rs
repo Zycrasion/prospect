@@ -1,5 +1,5 @@
 use winit::{event_loop::{EventLoop, ControlFlow}, window::{Window, WindowBuilder}, event::{self, WindowEvent, VirtualKeyCode, Event}, dpi::{Size, LogicalSize, PhysicalSize}};
-
+use crate::prospect_app::*;
 use crate::prospect_app::ProspectApp;
 
 use super::graphics_context::GraphicsContext;
@@ -22,7 +22,7 @@ impl ProspectWindow
         }
     }
 
-    pub fn run_with_app(self, app : Box<dyn ProspectApp>)
+    pub fn run_with_app(self, mut app : Box<dyn ProspectApp>)
     {
         let (event_loop, window) = (self.event_loop, self.window);
 
@@ -40,6 +40,19 @@ impl ProspectWindow
                         }
                         WindowEvent::KeyboardInput { input, ..} => 
                         {
+                            let response = app.process(PropsectEvent {key : input.virtual_keycode});
+                            
+                            if response == ProcessResponse::CloseApp
+                            {
+                                *control_flow = ControlFlow::Exit;
+                                return;
+                            }
+
+                            if response == ProcessResponse::DontProcess
+                            {
+                                return;
+                            }
+
                             if input.virtual_keycode == Some(VirtualKeyCode::Escape)
                             {
                                 *control_flow = ControlFlow::Exit;
