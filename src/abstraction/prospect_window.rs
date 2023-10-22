@@ -1,5 +1,5 @@
 use wgpu::{Surface, Device, Queue, SurfaceConfiguration, Backends};
-use winit::{event_loop::{EventLoop, ControlFlow}, window::{Window, WindowBuilder}, event::{self, WindowEvent, VirtualKeyCode, Event}, dpi::{Size, LogicalSize, PhysicalSize}};
+use winit::{event_loop::{EventLoop, ControlFlow}, window::{Window, WindowBuilder}, event::{self, WindowEvent, VirtualKeyCode, Event, KeyboardInput}, dpi::{Size, LogicalSize, PhysicalSize}};
 use crate::prospect_app::*;
 use crate::prospect_app::ProspectApp;
 
@@ -7,7 +7,7 @@ use super::{graphics_context::GraphicsContext, high_level_abstraction::HighLevel
 
 pub struct ProspectWindow
 {
-    event_loop : EventLoop<()>,
+    event_loop : Option<EventLoop<()>>,
     window : Window,
     surface : Surface,
     device : Device,
@@ -23,7 +23,7 @@ impl ProspectWindow
         
         Self
         {
-            event_loop,
+            event_loop : Some(event_loop),
             window,
             surface,
             device,
@@ -32,9 +32,22 @@ impl ProspectWindow
         }
     }
 
-    pub fn run_with_app(self, mut app : Box<dyn ProspectApp>)
+    fn process_input(&self, input : &KeyboardInput, app : &mut Box<dyn ProspectApp>) -> Option<ControlFlow>
     {
-        let (event_loop, window) = (self.event_loop, self.window);
+        let response = app.process(ProspectEvent::KeyboardInput(input.virtual_keycode));
+
+        match response
+        {
+            ProcessResponse::CloseApp => Some(ControlFlow::Exit),
+            ProcessResponse::ProspectProcess => if input.virtual_keycode == Some(VirtualKeyCode::Escape) {Some(ControlFlow::Exit)} else {None},
+            ProcessResponse::DontProcess => None,
+        }
+    }
+
+    pub fn run_with_app(mut self, mut app : Box<dyn ProspectApp>)
+    {
+        let event_loop = self.event_loop.take();
+        let event_loop = event_loop.unwrap();
 
         event_loop.run(move |event, _, control_flow| {
             match event
@@ -42,7 +55,7 @@ impl ProspectWindow
                 Event::WindowEvent {
                     ref event,
                     window_id
-                } if window_id == window.id() => {
+                } if window_id == self.window.id() => {
                     match event
                     {
                         WindowEvent::CloseRequested => {
@@ -50,23 +63,9 @@ impl ProspectWindow
                         }
                         WindowEvent::KeyboardInput { input, ..} => 
                         {
-                            let response = app.process(PropsectEvent {key : input.virtual_keycode});
-                            
-                            if response == ProcessResponse::CloseApp
+                            if let Some(flow) = self.process_input(input, &mut app)
                             {
-                                *control_flow = ControlFlow::Exit;
-                                return;
-                            }
-
-                            if response == ProcessResponse::DontProcess
-                            {
-                                return;
-                            }
-
-                            if input.virtual_keycode == Some(VirtualKeyCode::Escape)
-                            {
-                                *control_flow = ControlFlow::Exit;
-                                return;
+                                *control_flow = flow;
                             }
                         },
                         _ => {}

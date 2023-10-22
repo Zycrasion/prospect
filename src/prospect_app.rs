@@ -1,9 +1,9 @@
 use winit::{event::VirtualKeyCode, dpi::PhysicalSize};
 
 #[derive(Clone, Copy)]
-pub struct PropsectEvent
+pub enum ProspectEvent
 {
-    pub key : Option<VirtualKeyCode>
+    KeyboardInput(Option<VirtualKeyCode>)
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -20,7 +20,7 @@ pub trait ProspectApp
     
     fn draw(&mut self);
 
-    fn process(&mut self, event : PropsectEvent) -> ProcessResponse
+    fn process(&mut self, event : ProspectEvent) -> ProcessResponse
     {
         ProcessResponse::ProspectProcess
     }
