@@ -1,24 +1,34 @@
+use wgpu::{Surface, Device, Queue, SurfaceConfiguration, Backends};
 use winit::{event_loop::{EventLoop, ControlFlow}, window::{Window, WindowBuilder}, event::{self, WindowEvent, VirtualKeyCode, Event}, dpi::{Size, LogicalSize, PhysicalSize}};
 use crate::prospect_app::*;
 use crate::prospect_app::ProspectApp;
 
-use super::graphics_context::GraphicsContext;
+use super::{graphics_context::GraphicsContext, high_level_abstraction::HighLevelGraphicsContext};
 
 pub struct ProspectWindow
 {
     event_loop : EventLoop<()>,
-    window : Window
+    window : Window,
+    surface : Surface,
+    device : Device,
+    queue : Queue,
+    config : SurfaceConfiguration,
 }
 
 impl ProspectWindow
 {
     pub fn new<S : AsRef<str>>(title : S, width : u32, height : u32) -> Self
     {
-        let (event_loop, window) = GraphicsContext::create_window(title, width, height);
+        let (event_loop, window, surface, device, queue, config) = pollster::block_on(HighLevelGraphicsContext::init_window(title, width, height));
+        
         Self
         {
             event_loop,
-            window
+            window,
+            surface,
+            device,
+            queue,
+            config
         }
     }
 

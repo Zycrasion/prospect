@@ -22,7 +22,7 @@ impl ProspectApp for PongApp
 
     fn process(&mut self, event : PropsectEvent) -> ProcessResponse {
         
-        if event.key == Some(VirtualKeyCode::W)
+        if event.key == Some(VirtualKeyCode::Escape)
         {
             return ProcessResponse::CloseApp
         }

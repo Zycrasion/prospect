@@ -1,4 +1,4 @@
-use winit::event::VirtualKeyCode;
+use winit::{event::VirtualKeyCode, dpi::PhysicalSize};
 
 #[derive(Clone, Copy)]
 pub struct PropsectEvent
@@ -23,5 +23,10 @@ pub trait ProspectApp
     fn process(&mut self, event : PropsectEvent) -> ProcessResponse
     {
         ProcessResponse::ProspectProcess
+    }
+
+    fn resize(&mut self, new_size : PhysicalSize<u32>)
+    {
+        todo!()
     }
 }
