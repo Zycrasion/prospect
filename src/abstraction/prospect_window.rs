@@ -44,6 +44,18 @@ impl ProspectWindow
         }
     }
 
+    fn resize(&mut self, size : &PhysicalSize<u32>)
+    {
+        if size.width <= 0 || size.height <= 0
+        {
+            return;
+        }
+
+        self.config.width = size.width;
+        self.config.height = size.height;
+        self.surface.configure(&self.device, &self.config);
+    }
+
     pub fn run_with_app(mut self, mut app : Box<dyn ProspectApp>)
     {
         let event_loop = self.event_loop.take();
@@ -68,6 +80,14 @@ impl ProspectWindow
                                 *control_flow = flow;
                             }
                         },
+                        WindowEvent::Resized(size) =>
+                        {
+                            self.resize(size);
+                        }
+                        WindowEvent::ScaleFactorChanged { new_inner_size, .. } =>
+                        {
+                            self.resize(new_inner_size);
+                        }
                         _ => {}
                     }
                 }
