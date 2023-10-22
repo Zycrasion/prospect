@@ -2,6 +2,7 @@ use prospect::{
     abstraction::{prospect_window::ProspectWindow, graphics_context::GraphicsContext, high_level_abstraction::HighLevelGraphicsContext},
     prospect_app::{ProcessResponse, ProspectApp, ProspectEvent},
 };
+use wgpu::SurfaceError;
 use winit::{event::VirtualKeyCode, window};
 
 fn main() {
@@ -15,12 +16,13 @@ pub struct PongApp;
 impl ProspectApp for PongApp {
     fn setup(&mut self) {}
 
-    fn draw(&mut self, window : &ProspectWindow)
+    fn draw(&mut self, window : &ProspectWindow) -> Result<(), SurfaceError>
     {
         let clear_colour = (0.2, 0.2, 0.5);
         let (output, _view, command_encoder) = HighLevelGraphicsContext::start_render(window, clear_colour);
         
         HighLevelGraphicsContext::finish_render(window, command_encoder, output);
+        Ok(())
     }
 
     fn process(&mut self, event: ProspectEvent) -> ProcessResponse {

@@ -20,7 +20,7 @@ pub trait ProspectApp
 {
     fn setup(&mut self);
     
-    fn draw(&mut self, window : &ProspectWindow);
+    fn draw(&mut self, window : &ProspectWindow) -> Result<(), wgpu::SurfaceError>;
 
     fn process(&mut self, event : ProspectEvent) -> ProcessResponse
     {

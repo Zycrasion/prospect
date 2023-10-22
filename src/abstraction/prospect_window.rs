@@ -13,6 +13,7 @@ pub struct ProspectWindow
     device : Device,
     queue : Queue,
     config : SurfaceConfiguration,
+    pub size : (u32, u32),
 }
 
 impl ProspectWindow
@@ -28,7 +29,8 @@ impl ProspectWindow
             surface,
             device,
             queue,
-            config
+            config,
+            size : (width, height)
         }
     }
 
@@ -69,6 +71,12 @@ impl ProspectWindow
         self.config.width = size.width;
         self.config.height = size.height;
         self.surface.configure(&self.device, &self.config);
+        self.size = (size.width, size.height);
+    }
+
+    fn reconfigure(&mut self)
+    {
+        self.surface.configure(&self.device, &self.config)
     }
 
     pub fn run_with_app(mut self, mut app : Box<dyn ProspectApp>)
@@ -81,7 +89,14 @@ impl ProspectWindow
             {
                 Event::RedrawRequested(window_id) => if window_id == self.window.id()
                 {
-                    app.draw(&self);
+                    let result = app.draw(&self);
+                    match result
+                    {
+                        Ok(_) => {},
+                        Err(wgpu::SurfaceError::OutOfMemory) => *control_flow = ControlFlow::Exit,
+                        Err(wgpu::SurfaceError::Lost) => self.reconfigure(),
+                        Err(e) => eprintln!("{:#?}", e)
+                    }
                 },
                 Event::WindowEvent {
                     ref event,
