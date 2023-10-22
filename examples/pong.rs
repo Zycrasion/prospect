@@ -23,8 +23,13 @@ impl ProspectApp for PongApp {
     fn draw(&mut self, window : &ProspectWindow) -> Result<(), SurfaceError>
     {
         let clear_colour = (self.clear_col.0 / window.size.0 as f64, self.clear_col.1 / window.size.1 as f64, 0.5);
-        let (output, _view, command_encoder) = HighLevelGraphicsContext::start_render(window, clear_colour);
+        let (output, view, mut command_encoder) = HighLevelGraphicsContext::init_view(window);
+        let mut render_pass = HighLevelGraphicsContext::start_render(clear_colour, &view, &mut command_encoder);
+        render_pass.set_pipeline(window.get_render_pipeline());
+        render_pass.draw(0..3, 0..1);
         
+        drop(render_pass);
+
         HighLevelGraphicsContext::finish_render(window, command_encoder, output);
         Ok(())
     }

@@ -56,6 +56,11 @@ impl ProspectWindow {
         }
     }
 
+    pub fn get_render_pipeline(&self) -> &RenderPipeline
+    {
+        &self.render_pipeline
+    }
+
     pub fn get_surface(&self) -> &Surface {
         &self.surface
     }
