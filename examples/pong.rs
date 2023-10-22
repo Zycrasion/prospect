@@ -1,5 +1,5 @@
 use prospect::{
-    abstraction::{prospect_window::ProspectWindow, graphics_context::GraphicsContext},
+    abstraction::{prospect_window::ProspectWindow, graphics_context::GraphicsContext, high_level_abstraction::HighLevelGraphicsContext},
     prospect_app::{ProcessResponse, ProspectApp, ProspectEvent},
 };
 use winit::{event::VirtualKeyCode, window};
@@ -17,13 +17,10 @@ impl ProspectApp for PongApp {
 
     fn draw(&mut self, window : &ProspectWindow)
     {
-        let (output, view) = GraphicsContext::create_view(window.get_surface());
-        let mut command_encoder = GraphicsContext::create_command_encoder(window.get_device(), "Draw Loop Commands");
-        let render_pass = GraphicsContext::begin_render_pass_barebones((0.1, 0.1, 0.3, 1.0), "Render Pass", &view, &mut command_encoder);
-        drop(render_pass);
-
-        window.get_queue().submit(std::iter::once(command_encoder.finish()));
-        output.present();
+        let clear_colour = (0.2, 0.2, 0.5);
+        let (output, _view, command_encoder) = HighLevelGraphicsContext::start_render(window, clear_colour);
+        
+        HighLevelGraphicsContext::finish_render(window, command_encoder, output);
     }
 
     fn process(&mut self, event: ProspectEvent) -> ProcessResponse {
