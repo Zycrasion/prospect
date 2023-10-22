@@ -1,8 +1,10 @@
 use wgpu::{
     Adapter, Backends, Color, CommandEncoder, CommandEncoderDescriptor, Device, DeviceDescriptor,
-    Dx12Compiler, Features, Instance, InstanceDescriptor, Limits, LoadOp, PowerPreference, Queue,
-    RenderPass, RenderPassColorAttachment, RenderPassDescriptor, RequestDeviceError, Surface,
-    SurfaceConfiguration, SurfaceTexture, TextureUsages, TextureView, TextureViewDescriptor, Operations,
+    Dx12Compiler, Features, Instance, InstanceDescriptor, Limits, LoadOp, Operations,
+    PipelineLayout, PipelineLayoutDescriptor, PowerPreference, Queue, RenderPass,
+    RenderPassColorAttachment, RenderPassDescriptor, RenderPipeline, RequestDeviceError,
+    ShaderModule, ShaderModuleDescriptor, Surface, SurfaceConfiguration, SurfaceTexture,
+    TextureUsages, TextureView, TextureViewDescriptor, RenderPipelineDescriptor, VertexState, FragmentState, ColorTargetState, BlendState, ColorWrites, PrimitiveState, PrimitiveTopology, FrontFace, Face, PolygonMode, MultisampleState,
 };
 use winit::{
     dpi::{PhysicalSize, Size},
@@ -141,9 +143,74 @@ impl GraphicsContext {
                         a: clear_color.3,
                     }),
                     store: true,
-                }
+                },
             })],
             depth_stencil_attachment: None,
+        })
+    }
+
+    pub fn load_shader(name: &str, src: &str, device: &Device) -> ShaderModule {
+        device.create_shader_module(ShaderModuleDescriptor {
+            label: Some(name),
+            source: wgpu::ShaderSource::Wgsl(src.into()),
+        })
+    }
+
+    pub fn create_pipeline_layout(name: &str, device: &Device) -> PipelineLayout {
+        device.create_pipeline_layout(&PipelineLayoutDescriptor {
+            label: Some(name),
+            bind_group_layouts: &[],
+            push_constant_ranges: &[],
+        })
+    }
+
+    pub fn create_render_pipeline(
+        name: &str,
+        layout: &PipelineLayout,
+        vertex_entry: &str,
+        fragment_entry: &str,
+        shader: &ShaderModule,
+        device: &Device,
+        surface_config : &SurfaceConfiguration
+    ) -> RenderPipeline {
+        device.create_render_pipeline(&RenderPipelineDescriptor
+        {
+            label : Some(name),
+            layout: Some(layout),
+            vertex: VertexState {
+                module: shader,
+                entry_point: vertex_entry,
+                buffers: &[],
+            },
+            fragment: Some(FragmentState {
+                module : shader,
+                entry_point : fragment_entry,
+                targets: &[
+                    Some(ColorTargetState {
+                        format: surface_config.format,
+                        blend: Some(BlendState::REPLACE),
+                        write_mask: ColorWrites::ALL,
+                    })
+                ]
+            }),
+            primitive: PrimitiveState
+            {
+                topology: PrimitiveTopology::TriangleList,
+                strip_index_format: None,
+                front_face: FrontFace::Ccw,
+                cull_mode: Some(Face::Back),
+                polygon_mode: PolygonMode::Fill,
+                unclipped_depth: false,
+                conservative: false
+            },
+            depth_stencil : None,
+            multisample : MultisampleState
+            {
+                count : 1,
+                mask : !0,
+                alpha_to_coverage_enabled: false
+            },
+            multiview: None
         })
     }
 }
