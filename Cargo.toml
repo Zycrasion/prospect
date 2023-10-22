@@ -9,5 +9,6 @@ edition = "2021"
 env_logger = "0.10.0"
 log = "0.4.20"
 pollster = "0.3.0"
+vecto-rs = { git = "https://github.com/Zycrasion/vecto-rs", version = "1.0.1" }
 wgpu = "0.17.1"
 winit = "0.28.7"

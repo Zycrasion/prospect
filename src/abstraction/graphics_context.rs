@@ -140,7 +140,7 @@ impl GraphicsContext {
                         b: clear_color.2,
                         a: clear_color.3,
                     }),
-                    store: false,
+                    store: true,
                 }
             })],
             depth_stencil_attachment: None,

@@ -1,11 +1,13 @@
+use vecto_rs::positional::Vector;
 use winit::{event::VirtualKeyCode, dpi::PhysicalSize};
 
 use crate::abstraction::prospect_window::ProspectWindow;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq)]
 pub enum ProspectEvent
 {
-    KeyboardInput(Option<VirtualKeyCode>)
+    KeyboardInput(Option<VirtualKeyCode>),
+    CursorMoveEvent(Vector)
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]

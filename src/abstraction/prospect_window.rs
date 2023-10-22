@@ -1,3 +1,4 @@
+use vecto_rs::positional::Vector;
 use wgpu::{Surface, Device, Queue, SurfaceConfiguration, Backends};
 use winit::{event_loop::{EventLoop, ControlFlow}, window::{Window, WindowBuilder}, event::{self, WindowEvent, VirtualKeyCode, Event, KeyboardInput}, dpi::{Size, LogicalSize, PhysicalSize}};
 use crate::prospect_app::*;
@@ -49,14 +50,14 @@ impl ProspectWindow
         &self.queue
     }
 
-    fn process_input(&self, input : &KeyboardInput, app : &mut Box<dyn ProspectApp>) -> Option<ControlFlow>
+    fn process_input(&self, ev : ProspectEvent, app : &mut Box<dyn ProspectApp>) -> Option<ControlFlow>
     {
-        let response = app.process(ProspectEvent::KeyboardInput(input.virtual_keycode));
+        let response = app.process(ev);
 
         match response
         {
             ProcessResponse::CloseApp => Some(ControlFlow::Exit),
-            ProcessResponse::ProspectProcess => if input.virtual_keycode == Some(VirtualKeyCode::Escape) {Some(ControlFlow::Exit)} else {None},
+            ProcessResponse::ProspectProcess => if ev == ProspectEvent::KeyboardInput(Some(VirtualKeyCode::Escape)) {Some(ControlFlow::Exit)} else {None},
             ProcessResponse::DontProcess => None,
         }
     }
@@ -98,6 +99,10 @@ impl ProspectWindow
                         Err(e) => eprintln!("{:#?}", e)
                     }
                 },
+                Event::MainEventsCleared =>
+                {
+                    self.window.request_redraw();
+                }
                 Event::WindowEvent {
                     ref event,
                     window_id
@@ -109,11 +114,18 @@ impl ProspectWindow
                         }
                         WindowEvent::KeyboardInput { input, ..} => 
                         {
-                            if let Some(flow) = self.process_input(input, &mut app)
+                            if let Some(flow) = self.process_input(ProspectEvent::KeyboardInput(input.virtual_keycode), &mut app)
                             {
                                 *control_flow = flow;
                             }
                         },
+                        WindowEvent::CursorMoved { position, .. } =>
+                        {
+                            if let Some(flow) = self.process_input(ProspectEvent::CursorMoveEvent(Vector::new2(position.x as f32, position.y as f32)), &mut app)
+                            {
+                                *control_flow = flow;
+                            }
+                        }
                         WindowEvent::Resized(size) =>
                         {
                             self.resize(size);

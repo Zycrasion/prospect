@@ -6,18 +6,18 @@ use wgpu::SurfaceError;
 use winit::{event::VirtualKeyCode, window};
 
 fn main() {
-    let window = ProspectWindow::new("Pong", 480, 480);
+    let window = ProspectWindow::new("Hello World!", 480, 480);
 
-    window.run_with_app(Box::new(PongApp::default()))
+    window.run_with_app(Box::new(HelloWorld::default()))
 }
 
 #[derive(Default)]
-pub struct PongApp
+pub struct HelloWorld
 {
     clear_col : (f64, f64, f64)
 }
 
-impl ProspectApp for PongApp {
+impl ProspectApp for HelloWorld {
     fn setup(&mut self) {}
 
     fn draw(&mut self, window : &ProspectWindow) -> Result<(), SurfaceError>
