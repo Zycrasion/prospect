@@ -1,6 +1,8 @@
 use wgpu::{
-    Adapter, Backends, Device, Dx12Compiler, Instance, InstanceDescriptor, Limits, PowerPreference,
-    Queue, Surface, Features, RequestDeviceError, DeviceDescriptor, SurfaceConfiguration, TextureUsages,
+    Adapter, Backends, Color, CommandEncoder, CommandEncoderDescriptor, Device, DeviceDescriptor,
+    Dx12Compiler, Features, Instance, InstanceDescriptor, Limits, LoadOp, PowerPreference, Queue,
+    RenderPass, RenderPassColorAttachment, RenderPassDescriptor, RequestDeviceError, Surface,
+    SurfaceConfiguration, SurfaceTexture, TextureUsages, TextureView, TextureViewDescriptor, Operations,
 };
 use winit::{
     dpi::{PhysicalSize, Size},
@@ -55,38 +57,43 @@ impl GraphicsContext {
     }
 
     pub async fn create_device(adapter: &Adapter) -> Result<(Device, Queue), RequestDeviceError> {
-        adapter.request_device(
-            &DeviceDescriptor {
-                label: Some("Device"),
-                features: Features::empty(),
-                limits:  if cfg!(target_arch = "wasm32") {
-                    Limits::downlevel_webgl2_defaults()
-                } else
-                {
-                    Limits::default()
+        adapter
+            .request_device(
+                &DeviceDescriptor {
+                    label: Some("Device"),
+                    features: Features::empty(),
+                    limits: if cfg!(target_arch = "wasm32") {
+                        Limits::downlevel_webgl2_defaults()
+                    } else {
+                        Limits::default()
+                    },
                 },
-            },
-            None,
-        ).await
+                None,
+            )
+            .await
     }
 
-    pub fn config_surface_easy(surface: &Surface, adapter: &Adapter, device : &Device, size : (u32, u32)) -> SurfaceConfiguration
-    {
+    pub fn config_surface_easy(
+        surface: &Surface,
+        adapter: &Adapter,
+        device: &Device,
+        size: (u32, u32),
+    ) -> SurfaceConfiguration {
         let surface_caps = surface.get_capabilities(adapter);
 
-        let surface_format = surface_caps.formats.iter()
+        let surface_format = surface_caps
+            .formats
+            .iter()
             .copied()
             .find(|f| f.is_srgb())
             .unwrap_or(surface_caps.formats[0]);
 
-        if size.0 == 0 || size.1 == 0
-        {
+        if size.0 == 0 || size.1 == 0 {
             eprintln!("Error: Size given to configure surface is 0 in height or width. Must be more than 0");
             panic!()
         }
 
-        let config = SurfaceConfiguration
-        {
+        let config = SurfaceConfiguration {
             usage: TextureUsages::RENDER_ATTACHMENT,
             format: surface_format,
             width: size.0,
@@ -99,5 +106,44 @@ impl GraphicsContext {
         surface.configure(device, &config);
 
         config
+    }
+
+    pub fn create_view(surface: &Surface) -> (SurfaceTexture, TextureView) {
+        let output = surface
+            .get_current_texture()
+            .expect("Unable to get render texture");
+        let view = output
+            .texture
+            .create_view(&TextureViewDescriptor::default());
+        (output, view)
+    }
+
+    pub fn create_command_encoder(device: &Device, name: &str) -> CommandEncoder {
+        device.create_command_encoder(&CommandEncoderDescriptor { label: Some(name) })
+    }
+
+    pub fn begin_render_pass_barebones<'pass>(
+        clear_color: (f64, f64, f64, f64),
+        label: &str,
+        view: &'pass TextureView,
+        command_encoder: &'pass mut CommandEncoder,
+    ) -> RenderPass<'pass> {
+        command_encoder.begin_render_pass(&RenderPassDescriptor {
+            label: Some(label),
+            color_attachments: &[Some(RenderPassColorAttachment {
+                view: &view,
+                resolve_target: None,
+                ops: Operations {
+                    load: LoadOp::Clear(Color {
+                        r: clear_color.0,
+                        g: clear_color.1,
+                        b: clear_color.2,
+                        a: clear_color.3,
+                    }),
+                    store: false,
+                }
+            })],
+            depth_stencil_attachment: None,
+        })
     }
 }

@@ -1,5 +1,7 @@
 use winit::{event::VirtualKeyCode, dpi::PhysicalSize};
 
+use crate::abstraction::prospect_window::ProspectWindow;
+
 #[derive(Clone, Copy)]
 pub enum ProspectEvent
 {
@@ -18,7 +20,7 @@ pub trait ProspectApp
 {
     fn setup(&mut self);
     
-    fn draw(&mut self);
+    fn draw(&mut self, window : &ProspectWindow);
 
     fn process(&mut self, event : ProspectEvent) -> ProcessResponse
     {

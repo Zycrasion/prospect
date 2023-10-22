@@ -32,6 +32,21 @@ impl ProspectWindow
         }
     }
 
+    pub fn get_surface(&self) -> &Surface
+    {
+        &self.surface
+    }
+
+    pub fn get_device(&self) -> &Device
+    {
+        &self.device
+    }
+
+    pub fn get_queue(&self) -> &Queue
+    {
+        &self.queue
+    }
+
     fn process_input(&self, input : &KeyboardInput, app : &mut Box<dyn ProspectApp>) -> Option<ControlFlow>
     {
         let response = app.process(ProspectEvent::KeyboardInput(input.virtual_keycode));
@@ -64,6 +79,10 @@ impl ProspectWindow
         event_loop.run(move |event, _, control_flow| {
             match event
             {
+                Event::RedrawRequested(window_id) => if window_id == self.window.id()
+                {
+                    app.draw(&self);
+                },
                 Event::WindowEvent {
                     ref event,
                     window_id
