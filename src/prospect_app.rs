@@ -24,9 +24,4 @@ pub trait ProspectApp
     {
         ProcessResponse::ProspectProcess
     }
-
-    fn resize(&mut self, new_size : PhysicalSize<u32>)
-    {
-        todo!()
-    }
 }
