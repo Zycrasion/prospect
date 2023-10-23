@@ -1,10 +1,10 @@
 use wgpu::{
     Backends, CommandEncoder, Device, Queue, RenderPass, Surface, SurfaceConfiguration,
-    SurfaceTexture, Texture, TextureView,
+    SurfaceTexture, Texture, TextureView, RenderPipeline,
 };
 use winit::{event_loop::EventLoop, window::Window};
 
-use super::{graphics_context::GraphicsContext, prospect_window::ProspectWindow};
+use super::{graphics_context::GraphicsContext, prospect_window::ProspectWindow, shader::ProspectShader};
 
 pub struct HighLevelGraphicsContext;
 
@@ -77,5 +77,12 @@ impl HighLevelGraphicsContext {
             .get_queue()
             .submit(std::iter::once(command_encoder.finish()));
         output.present()
+    }
+
+    pub fn create_render_pipeline(name: &str, device : &Device, shader : &impl ProspectShader) -> RenderPipeline
+    {
+        let layout = GraphicsContext::create_pipeline_layout(name, device);
+        let pipeline = GraphicsContext::create_render_pipeline(name, &layout, shader.fragment_state(), shader.vertex_state(), device);
+        pipeline
     }
 }

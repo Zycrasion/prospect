@@ -170,7 +170,6 @@ impl GraphicsContext {
         fragment_state : FragmentState,
         vertex_state : VertexState,
         device: &Device,
-        surface_config : &SurfaceConfiguration
     ) -> RenderPipeline {
         device.create_render_pipeline(&RenderPipelineDescriptor
         {

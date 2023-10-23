@@ -31,9 +31,6 @@ impl ProspectWindow {
         let (event_loop, window, surface, device, queue, config) =
             pollster::block_on(HighLevelGraphicsContext::init_window(title, width, height));
 
-        let pipeline_layout =
-            GraphicsContext::create_pipeline_layout("ProspectWindow Pipeline Layout", &device);
-
         let main_shader = BasicShader::new(
             "Main Shader",
             "vs_main",
@@ -43,14 +40,7 @@ impl ProspectWindow {
             &device,
         );
 
-        let render_pipeline = GraphicsContext::create_render_pipeline(
-            "Main Pipeline",
-            &pipeline_layout,
-            main_shader.fragment_state(),
-            main_shader.vertex_state(),
-            &device,
-            &config,
-        );
+        let render_pipeline = HighLevelGraphicsContext::create_render_pipeline("Main Pipeline", &device, &main_shader);
 
         Self {
             event_loop: Some(event_loop),
