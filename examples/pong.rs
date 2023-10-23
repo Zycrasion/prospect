@@ -27,7 +27,7 @@ impl ProspectApp for PongApp {
         let mut render_pass = HighLevelGraphicsContext::start_render(clear_colour, &view, &mut command_encoder);
         render_pass.set_pipeline(window.get_render_pipeline());
         render_pass.draw(0..3, 0..1);
-        
+
         drop(render_pass);
 
         HighLevelGraphicsContext::finish_render(window, command_encoder, output);

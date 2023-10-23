@@ -167,9 +167,8 @@ impl GraphicsContext {
     pub fn create_render_pipeline(
         name: &str,
         layout: &PipelineLayout,
-        vertex_entry: &str,
-        fragment_entry: &str,
-        shader: &ShaderModule,
+        fragment_state : FragmentState,
+        vertex_state : VertexState,
         device: &Device,
         surface_config : &SurfaceConfiguration
     ) -> RenderPipeline {
@@ -177,22 +176,8 @@ impl GraphicsContext {
         {
             label : Some(name),
             layout: Some(layout),
-            vertex: VertexState {
-                module: shader,
-                entry_point: vertex_entry,
-                buffers: &[],
-            },
-            fragment: Some(FragmentState {
-                module : shader,
-                entry_point : fragment_entry,
-                targets: &[
-                    Some(ColorTargetState {
-                        format: surface_config.format,
-                        blend: Some(BlendState::REPLACE),
-                        write_mask: ColorWrites::ALL,
-                    })
-                ]
-            }),
+            vertex: vertex_state,
+            fragment: Some(fragment_state),
             primitive: PrimitiveState
             {
                 topology: PrimitiveTopology::TriangleList,

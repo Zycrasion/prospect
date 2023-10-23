@@ -9,7 +9,11 @@ use winit::{
     window::{Window, WindowBuilder},
 };
 
-use super::{graphics_context::GraphicsContext, high_level_abstraction::HighLevelGraphicsContext};
+use super::{
+    graphics_context::GraphicsContext,
+    high_level_abstraction::HighLevelGraphicsContext,
+    shader::{BasicShader, ProspectShader},
+};
 
 pub struct ProspectWindow {
     event_loop: Option<EventLoop<()>>,
@@ -29,17 +33,21 @@ impl ProspectWindow {
 
         let pipeline_layout =
             GraphicsContext::create_pipeline_layout("ProspectWindow Pipeline Layout", &device);
-        let shader = GraphicsContext::load_shader(
+
+        let main_shader = BasicShader::new(
             "Main Shader",
-            include_str!("../shaders/shader.wgsl"),
-            &device,
-        );
-        let render_pipeline = GraphicsContext::create_render_pipeline(
-            "ProspectWindow Render Pipeline",
-            &pipeline_layout,
             "vs_main",
             "fs_main",
-            &shader,
+            include_str!("../shaders/shader.wgsl"),
+            &config,
+            &device,
+        );
+
+        let render_pipeline = GraphicsContext::create_render_pipeline(
+            "Main Pipeline",
+            &pipeline_layout,
+            main_shader.fragment_state(),
+            main_shader.vertex_state(),
             &device,
             &config,
         );
@@ -56,8 +64,7 @@ impl ProspectWindow {
         }
     }
 
-    pub fn get_render_pipeline(&self) -> &RenderPipeline
-    {
+    pub fn get_render_pipeline(&self) -> &RenderPipeline {
         &self.render_pipeline
     }
 
