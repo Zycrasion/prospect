@@ -1,9 +1,9 @@
 use wgpu::{
     BlendState, ColorTargetState, ColorWrites, Device, FragmentState, ShaderModule, Surface,
-    SurfaceConfiguration, TextureFormat, VertexState,
+    SurfaceConfiguration, TextureFormat, VertexState, VertexBufferLayout,
 };
 
-use super::graphics_context::GraphicsContext;
+use super::{graphics_context::GraphicsContext, vertex::Vertex};
 
 pub trait ProspectShader {
     fn get_name(&self) -> &str;
@@ -41,7 +41,7 @@ impl ProspectShader for BasicShader {
         VertexState {
             module: &self.module,
             entry_point: &self.vertex_entry,
-            buffers: &[],
+            buffers: &[Vertex::VERTEX_BUFFER_LAYOUT],
         }
     }
 }

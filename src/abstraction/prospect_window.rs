@@ -1,7 +1,9 @@
 use crate::prospect_app::ProspectApp;
 use crate::prospect_app::*;
 use vecto_rs::positional::Vector;
-use wgpu::{Backends, Device, Queue, RenderPipeline, Surface, SurfaceConfiguration};
+use wgpu::{
+    Backends, Device, Queue, RenderPipeline, Surface, SurfaceConfiguration, VertexBufferLayout,
+};
 use winit::{
     dpi::{LogicalSize, PhysicalSize, Size},
     event::{self, Event, KeyboardInput, VirtualKeyCode, WindowEvent},
@@ -27,7 +29,11 @@ pub struct ProspectWindow {
 }
 
 impl ProspectWindow {
-    pub fn new<S: AsRef<str>>(title: S, width: u32, height: u32) -> Self {
+    pub fn new<S: AsRef<str>>(
+        title: S,
+        width: u32,
+        height: u32,
+    ) -> Self {
         let (event_loop, window, surface, device, queue, config) =
             pollster::block_on(HighLevelGraphicsContext::init_window(title, width, height));
 

@@ -1,16 +1,23 @@
+use bytemuck::NoUninit;
 use wgpu::{
-    Adapter, Backends, Color, CommandEncoder, CommandEncoderDescriptor, Device, DeviceDescriptor,
-    Dx12Compiler, Features, Instance, InstanceDescriptor, Limits, LoadOp, Operations,
-    PipelineLayout, PipelineLayoutDescriptor, PowerPreference, Queue, RenderPass,
-    RenderPassColorAttachment, RenderPassDescriptor, RenderPipeline, RequestDeviceError,
-    ShaderModule, ShaderModuleDescriptor, Surface, SurfaceConfiguration, SurfaceTexture,
-    TextureUsages, TextureView, TextureViewDescriptor, RenderPipelineDescriptor, VertexState, FragmentState, ColorTargetState, BlendState, ColorWrites, PrimitiveState, PrimitiveTopology, FrontFace, Face, PolygonMode, MultisampleState,
+    util::{BufferInitDescriptor, DeviceExt},
+    Adapter, Backends, BlendState, Buffer, BufferAddress, Color, ColorTargetState, ColorWrites,
+    CommandEncoder, CommandEncoderDescriptor, Device, DeviceDescriptor, Dx12Compiler, Face,
+    Features, FragmentState, FrontFace, Instance, InstanceDescriptor, Limits, LoadOp,
+    MultisampleState, Operations, PipelineLayout, PipelineLayoutDescriptor, PolygonMode,
+    PowerPreference, PrimitiveState, PrimitiveTopology, Queue, RenderPass,
+    RenderPassColorAttachment, RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor,
+    RequestDeviceError, ShaderModule, ShaderModuleDescriptor, Surface, SurfaceConfiguration,
+    SurfaceTexture, TextureUsages, TextureView, TextureViewDescriptor, VertexAttribute,
+    VertexBufferLayout, VertexFormat, VertexState, VertexStepMode,
 };
 use winit::{
     dpi::{PhysicalSize, Size},
     event_loop::EventLoop,
     window::{Window, WindowBuilder},
 };
+
+use super::vertex::Vertex;
 
 pub struct GraphicsContext;
 
@@ -167,34 +174,44 @@ impl GraphicsContext {
     pub fn create_render_pipeline(
         name: &str,
         layout: &PipelineLayout,
-        fragment_state : FragmentState,
-        vertex_state : VertexState,
+        fragment_state: FragmentState,
+        vertex_state: VertexState,
         device: &Device,
     ) -> RenderPipeline {
-        device.create_render_pipeline(&RenderPipelineDescriptor
-        {
-            label : Some(name),
+        device.create_render_pipeline(&RenderPipelineDescriptor {
+            label: Some(name),
             layout: Some(layout),
             vertex: vertex_state,
             fragment: Some(fragment_state),
-            primitive: PrimitiveState
-            {
+            primitive: PrimitiveState {
                 topology: PrimitiveTopology::TriangleList,
                 strip_index_format: None,
                 front_face: FrontFace::Ccw,
                 cull_mode: Some(Face::Back),
                 polygon_mode: PolygonMode::Fill,
                 unclipped_depth: false,
-                conservative: false
+                conservative: false,
             },
-            depth_stencil : None,
-            multisample : MultisampleState
-            {
-                count : 1,
-                mask : !0,
-                alpha_to_coverage_enabled: false
+            depth_stencil: None,
+            multisample: MultisampleState {
+                count: 1,
+                mask: !0,
+                alpha_to_coverage_enabled: false,
             },
-            multiview: None
+            multiview: None,
+        })
+    }
+
+    pub fn create_buffer<A: NoUninit>(
+        device: &Device,
+        name: &str,
+        contents: &[A],
+        usage: wgpu::BufferUsages,
+    ) -> Buffer {
+        device.create_buffer_init(&BufferInitDescriptor {
+            label: Some(name),
+            contents: bytemuck::cast_slice(contents),
+            usage,
         })
     }
 }
