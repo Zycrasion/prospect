@@ -1,5 +1,5 @@
 use prospect::{
-    abstraction::{prospect_window::ProspectWindow, graphics_context::GraphicsContext, high_level_abstraction::HighLevelGraphicsContext, vertex::Vertex},
+    abstraction::{prospect_window::ProspectWindow, graphics_context::GraphicsContext, high_level_abstraction::HighLevelGraphicsContext, vertex::Vertex, mesh::Mesh},
     prospect_app::{ProcessResponse, ProspectApp, ProspectEvent},
 };
 use wgpu::{SurfaceError, BufferUsages};
@@ -22,20 +22,19 @@ fn main() {
 pub struct PongApp
 {
     clear_col : (f64, f64, f64),
-    vertex_buffer : wgpu::Buffer,
-    num_vertices : u32
+    triangle_mesh : Mesh
 }
 
 impl PongApp
 {
     fn new(window : &ProspectWindow) -> Self
     {
-        let vertex_buffer = GraphicsContext::create_buffer(window.get_device(), "Vertex Buffer", VERTICES, BufferUsages::VERTEX);
+        let triangle_mesh = Mesh::from_vertices(VERTICES, window.get_device());
+
         Self
         {
             clear_col : (0., 0. ,0.),
-            vertex_buffer,
-            num_vertices : VERTICES.len() as u32
+            triangle_mesh
         }
     }
 }
@@ -49,8 +48,7 @@ impl ProspectApp for PongApp {
         let (output, view, mut command_encoder) = HighLevelGraphicsContext::init_view(window);
         let mut render_pass = HighLevelGraphicsContext::start_render(clear_colour, &view, &mut command_encoder);
         render_pass.set_pipeline(window.get_render_pipeline());
-        render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-        render_pass.draw(0..self.num_vertices, 0..1);
+        self.triangle_mesh.draw(&mut render_pass);
 
         drop(render_pass);
 
