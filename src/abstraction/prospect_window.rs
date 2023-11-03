@@ -6,7 +6,7 @@ use wgpu::{
 };
 use winit::{
     dpi::{LogicalSize, PhysicalSize, Size},
-    event::{self, Event, KeyboardInput, VirtualKeyCode, WindowEvent},
+    event::{self, Event, KeyboardInput, VirtualKeyCode, WindowEvent, ElementState},
     event_loop::{ControlFlow, EventLoop},
     window::{Window, WindowBuilder},
 };
@@ -86,7 +86,7 @@ impl ProspectWindow {
         match response {
             ProcessResponse::CloseApp => Some(ControlFlow::Exit),
             ProcessResponse::ProspectProcess => {
-                if ev == ProspectEvent::KeyboardInput(Some(VirtualKeyCode::Escape)) {
+                if ev == ProspectEvent::KeyboardInput(Some(VirtualKeyCode::Escape), ElementState::Pressed) {
                     Some(ControlFlow::Exit)
                 } else {
                     None
@@ -139,7 +139,7 @@ impl ProspectWindow {
                 }
                 WindowEvent::KeyboardInput { input, .. } => {
                     if let Some(flow) = self.process_input(
-                        ProspectEvent::KeyboardInput(input.virtual_keycode),
+                        ProspectEvent::KeyboardInput(input.virtual_keycode, input.state),
                         &mut app,
                     ) {
                         *control_flow = flow;
