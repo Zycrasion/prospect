@@ -1,6 +1,6 @@
 use prospect::{
     abstraction::{prospect_window::ProspectWindow, graphics_context::GraphicsContext, high_level_abstraction::HighLevelGraphicsContext, mesh::{Mesh, Meshable}, vertex::Vertex, shader::BasicShader},
-    prospect_app::{ProcessResponse, ProspectApp, ProspectEvent}, prospect_shape::ProspectShape, render_pipeline_index::RenderPipelineIndex,
+    prospect_app::{ProcessResponse, ProspectApp, ProspectEvent}, prospect_shape::ProspectShape, prospect_shader_manager::ProspectShaderManager,
 };
 use wgpu::SurfaceError;
 use winit::{event::VirtualKeyCode, window};
@@ -16,9 +16,9 @@ const TRIANGLE : ProspectShape<&[Vertex], &[u16]> = ProspectShape
 };
 
 fn main() {
-    let window = ProspectWindow::new("Hello World!", 480, 480);
+    let mut window = ProspectWindow::new("Hello World!", 480, 480);
 
-    let a = Box::new(HelloWorld::new(&window));
+    let a = Box::new(HelloWorld::new(&mut window));
     window.run_with_app(a);
 }
 
@@ -26,23 +26,21 @@ pub struct HelloWorld
 {
     clear_col : (f64, f64, f64),
     mesh : Mesh,
-    shader_manager : RenderPipelineIndex
 }
 
 impl HelloWorld
 {
-    pub fn new(window : &ProspectWindow) -> Self
+    pub fn new(window : &mut ProspectWindow) -> Self
     {
-        let mut shader_manager = RenderPipelineIndex::new();
-        let main_shader = shader_manager.add_shader(&BasicShader::new(&window), &window).expect("Unable to add BasicShader");
+        let basic_shader = BasicShader::new(window);
+        let basic_shader = window.add_shader(&basic_shader).expect("Unable to register BasicShader");
 
-        let mesh = Mesh::from_shape(&TRIANGLE, window.get_device(), &main_shader);
+        let mesh = Mesh::from_shape(&TRIANGLE, window.get_device(), &basic_shader);
 
         Self
         {
             mesh,
             clear_col: (0., 0., 0.),
-            shader_manager
         }
     }
 }
@@ -56,7 +54,7 @@ impl ProspectApp for HelloWorld {
         let (output, view, mut command_encoder) = HighLevelGraphicsContext::init_view(window);
         let mut render_pass = HighLevelGraphicsContext::start_render(clear_colour, &view, &mut command_encoder);
 
-        self.mesh.draw(&mut render_pass, &self.shader_manager);
+        self.mesh.draw(&mut render_pass, window.get_shader_manager());
 
         drop(render_pass);
 

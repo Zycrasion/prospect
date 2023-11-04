@@ -1,14 +1,15 @@
 use crate::prospect_app::ProspectApp;
+use crate::prospect_shader_manager::ProspectShaderManager;
 use crate::prospect_app::*;
 use vecto_rs::positional::Vector;
 use wgpu::{
     Backends, Device, Queue, RenderPipeline, Surface, SurfaceConfiguration, VertexBufferLayout,
 };
 use winit::{
-    dpi::{LogicalSize, PhysicalSize, Size},
-    event::{self, Event, KeyboardInput, VirtualKeyCode, WindowEvent, ElementState},
+    dpi::PhysicalSize,
+    event::{Event, VirtualKeyCode, WindowEvent, ElementState},
     event_loop::{ControlFlow, EventLoop},
-    window::{Window, WindowBuilder},
+    window::{Window},
 };
 
 use super::{
@@ -24,6 +25,7 @@ pub struct ProspectWindow {
     device: Device,
     queue: Queue,
     config: SurfaceConfiguration,
+    shader_manager: ProspectShaderManager,
     pub size: (u32, u32),
 }
 
@@ -36,6 +38,7 @@ impl ProspectWindow {
         let (event_loop, window, surface, device, queue, config) =
             pollster::block_on(HighLevelGraphicsContext::init_window(title, width, height));
 
+        let shader_manager = ProspectShaderManager::new();
 
         Self {
             event_loop: Some(event_loop),
@@ -45,7 +48,13 @@ impl ProspectWindow {
             queue,
             config,
             size: (width, height),
+            shader_manager
         }
+    }
+    
+    pub fn get_shader_manager(&self) -> &ProspectShaderManager
+    {
+        &self.shader_manager
     }
 
     pub fn get_surface_config(&self) -> &SurfaceConfiguration
@@ -63,6 +72,11 @@ impl ProspectWindow {
 
     pub fn get_queue(&self) -> &Queue {
         &self.queue
+    }
+
+    pub fn add_shader(&mut self, shader : &impl ProspectShader) -> Option<crate::prospect_shader_manager::ProspectShaderIndex>
+    {
+        self.shader_manager.add_shader(shader, &self.device)
     }
 
     fn process_input(
@@ -84,6 +98,7 @@ impl ProspectWindow {
             ProcessResponse::DontProcess => None,
         }
     }
+
 
     fn resize(&mut self, size: &PhysicalSize<u32>) {
         if size.width <= 0 || size.height <= 0 {

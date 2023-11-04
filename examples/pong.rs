@@ -7,7 +7,7 @@ use prospect::{
         vertex::Vertex,
     },
     prospect_app::{ProcessResponse, ProspectApp, ProspectEvent},
-    prospect_shape::ProspectShape, render_pipeline_index::RenderPipelineIndex,
+    prospect_shape::ProspectShape, prospect_shader_manager::ProspectShaderManager,
 };
 use wgpu::SurfaceError;
 use winit::event::{ElementState, VirtualKeyCode};
@@ -57,9 +57,9 @@ const TRIANGLE: ProspectShape<&[Vertex], &[u16]> = ProspectShape {
 };
 
 fn main() {
-    let window = ProspectWindow::new("Pong", 480, 480);
+    let mut window = ProspectWindow::new("Pong", 480, 480);
 
-    let app = PongApp::new(&window);
+    let app = PongApp::new(&mut window);
     window.run_with_app(Box::new(app))
 }
 
@@ -68,25 +68,24 @@ pub struct PongApp {
     triangle_mesh: Mesh,
     pentagon_mesh: Mesh,
     draw_triangle: bool,
-    shader_manager : RenderPipelineIndex
 }
 
 
 impl PongApp {
-    fn new(window: &ProspectWindow) -> Self {
+    fn new(window: &mut ProspectWindow) -> Self {
         let main_shader = BasicShader::new(&window);
-        let mut shader_manager = RenderPipelineIndex::new();
-        let main_shader = shader_manager.add_shader(&main_shader, window).expect("Unable to add BasicShader");
+        let main_shader = window.add_shader(&main_shader).expect("Unable to register the Main Shader");
 
         let pentagon_mesh = Mesh::from_shape(&PENTAGON, window.get_device(), &main_shader);
         let triangle_mesh = Mesh::from_shape(&TRIANGLE, window.get_device(), &main_shader);
+
+        println!("{:#?}\n{:#?}", triangle_mesh, pentagon_mesh);
 
         Self {
             clear_col: (0., 0., 0.),
             triangle_mesh,
             pentagon_mesh,
             draw_triangle: true,
-            shader_manager
         }
     }
 }
@@ -106,9 +105,9 @@ impl ProspectApp for PongApp {
             HighLevelGraphicsContext::start_render(clear_colour, &view, &mut command_encoder);
 
         if self.draw_triangle {
-            self.triangle_mesh.draw(&mut render_pass, &self.shader_manager);
+            self.triangle_mesh.draw(&mut render_pass, window.get_shader_manager());
         } else {
-            self.pentagon_mesh.draw(&mut render_pass, &self.shader_manager);
+            self.pentagon_mesh.draw(&mut render_pass, window.get_shader_manager());
         }
 
         drop(render_pass);
