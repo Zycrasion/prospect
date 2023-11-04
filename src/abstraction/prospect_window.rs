@@ -24,7 +24,6 @@ pub struct ProspectWindow {
     device: Device,
     queue: Queue,
     config: SurfaceConfiguration,
-    render_pipeline: RenderPipeline,
     pub size: (u32, u32),
 }
 
@@ -37,16 +36,6 @@ impl ProspectWindow {
         let (event_loop, window, surface, device, queue, config) =
             pollster::block_on(HighLevelGraphicsContext::init_window(title, width, height));
 
-        let main_shader = BasicShader::new(
-            "Main Shader",
-            "vs_main",
-            "fs_main",
-            include_str!("../shaders/shader.wgsl"),
-            &config,
-            &device,
-        );
-
-        let render_pipeline = HighLevelGraphicsContext::create_render_pipeline("Main Pipeline", &device, &main_shader);
 
         Self {
             event_loop: Some(event_loop),
@@ -56,12 +45,12 @@ impl ProspectWindow {
             queue,
             config,
             size: (width, height),
-            render_pipeline,
         }
     }
 
-    pub fn get_render_pipeline(&self) -> &RenderPipeline {
-        &self.render_pipeline
+    pub fn get_surface_config(&self) -> &SurfaceConfiguration
+    {
+        &self.config
     }
 
     pub fn get_surface(&self) -> &Surface {

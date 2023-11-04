@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 bytemuck = { version = "1.14.0", features = ["derive"] }
 env_logger = "0.10.0"
+image = {version = "0.24.7", default-features = false, features = ["png", "jpeg"]}
 log = "0.4.20"
 pollster = "0.3.0"
 vecto-rs = { git = "https://github.com/Zycrasion/vecto-rs", version = "1.0.1" }

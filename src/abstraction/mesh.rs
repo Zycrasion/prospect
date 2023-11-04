@@ -1,13 +1,16 @@
+use std::rc::Rc;
+
 use bytemuck::NoUninit;
-use wgpu::{Buffer, BufferUsages, RenderPass, Device, IndexFormat};
+use wgpu::{Buffer, BufferUsages, RenderPass, Device, IndexFormat, RenderPipeline};
+use winit::window::Window;
 
 use crate::prospect_shape::ProspectShape;
-
-use super::{vertex::Vertex, graphics_context::GraphicsContext};
+use crate::render_pipeline_index::*;
+use super::{vertex::Vertex, graphics_context::GraphicsContext, prospect_window::ProspectWindow};
 
 pub trait Meshable
 {
-    fn draw<'life>(&'life self, render_pass : &mut RenderPass<'life>);
+    fn draw<'life>(&'life self, render_pass : &mut RenderPass<'life>, shader_manager : &'life RenderPipelineIndex);
 }
 
 #[derive(Debug)]
@@ -15,12 +18,13 @@ pub struct Mesh
 {
     vertex_buffer : Buffer,
     index_buffer : Buffer,
-    index_count : u32
+    index_count : u32,
+    render_pipeline : RenderPipelineKey
 }
 
 impl Mesh
 {
-    pub fn from_shape<T, U>(shape : &ProspectShape<T, U>, device : &Device) -> Self
+    pub fn from_shape<T, U>(shape : &ProspectShape<T, U>, device : &Device, pipeline : &RenderPipelineKey) -> Self
         where   T : Into<Vec<Vertex>> + Clone,
                 U : Into<Vec<u16>> + Clone
     {
@@ -42,10 +46,10 @@ impl Mesh
             shape.indices.clone().unwrap().into()
         };
 
-        Self::new(vertices, indices, device)
+        Self::new(vertices, indices, device, pipeline)
     }
 
-    pub fn new<T, U>(vertices : T, indices : U, device : &Device) -> Self 
+    pub fn new<T, U>(vertices : T, indices : U, device : &Device, pipeline : &RenderPipelineKey) -> Self 
         where   T : Into<Vec<Vertex>>,
                 U : Into<Vec<u16>>
     {
@@ -60,14 +64,16 @@ impl Mesh
         {
             vertex_buffer,
             index_buffer,
-            index_count: count as u32
+            index_count: count as u32,
+            render_pipeline : pipeline.clone()
         }
     }
 }
 
 impl Meshable for Mesh
 {
-    fn draw<'life>(&'life self, render_pass : &mut RenderPass<'life>) {
+    fn draw<'life>(&'life self, render_pass : &mut RenderPass<'life>, shader_manager : &'life RenderPipelineIndex) {
+        shader_manager.apply_render_pipeline(&self.render_pipeline, render_pass);
         render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
         render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);  
         render_pass.draw_indexed(0..self.index_count, 0, 0..1); 

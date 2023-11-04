@@ -3,13 +3,14 @@ use prospect::{
         high_level_abstraction::HighLevelGraphicsContext,
         mesh::{Mesh, Meshable},
         prospect_window::ProspectWindow,
+        shader::{BasicShader, self},
         vertex::Vertex,
     },
     prospect_app::{ProcessResponse, ProspectApp, ProspectEvent},
-    prospect_shape::ProspectShape,
+    prospect_shape::ProspectShape, render_pipeline_index::RenderPipelineIndex,
 };
 use wgpu::SurfaceError;
-use winit::event::{VirtualKeyCode, ElementState};
+use winit::event::{ElementState, VirtualKeyCode};
 
 const PENTAGON: ProspectShape<&[Vertex], &[u16]> = ProspectShape {
     vertices: &[
@@ -67,18 +68,25 @@ pub struct PongApp {
     triangle_mesh: Mesh,
     pentagon_mesh: Mesh,
     draw_triangle: bool,
+    shader_manager : RenderPipelineIndex
 }
+
 
 impl PongApp {
     fn new(window: &ProspectWindow) -> Self {
-        let pentagon_mesh = Mesh::from_shape(&PENTAGON, window.get_device());
-        let triangle_mesh = Mesh::from_shape(&TRIANGLE, window.get_device());
+        let main_shader = BasicShader::new(&window);
+        let mut shader_manager = RenderPipelineIndex::new();
+        let main_shader = shader_manager.add_shader(&main_shader, window).expect("Unable to add BasicShader");
+
+        let pentagon_mesh = Mesh::from_shape(&PENTAGON, window.get_device(), &main_shader);
+        let triangle_mesh = Mesh::from_shape(&TRIANGLE, window.get_device(), &main_shader);
 
         Self {
             clear_col: (0., 0., 0.),
             triangle_mesh,
             pentagon_mesh,
             draw_triangle: true,
+            shader_manager
         }
     }
 }
@@ -97,12 +105,10 @@ impl ProspectApp for PongApp {
         let mut render_pass =
             HighLevelGraphicsContext::start_render(clear_colour, &view, &mut command_encoder);
 
-        render_pass.set_pipeline(window.get_render_pipeline());
-
         if self.draw_triangle {
-            self.triangle_mesh.draw(&mut render_pass);
+            self.triangle_mesh.draw(&mut render_pass, &self.shader_manager);
         } else {
-            self.pentagon_mesh.draw(&mut render_pass);
+            self.pentagon_mesh.draw(&mut render_pass, &self.shader_manager);
         }
 
         drop(render_pass);
@@ -114,8 +120,7 @@ impl ProspectApp for PongApp {
     fn process(&mut self, event: ProspectEvent) -> ProcessResponse {
         match event {
             ProspectEvent::KeyboardInput(key, ElementState::Pressed) => {
-                if key == Some(VirtualKeyCode::Space)
-                {
+                if key == Some(VirtualKeyCode::Space) {
                     self.draw_triangle = !self.draw_triangle;
                 }
 
@@ -124,9 +129,8 @@ impl ProspectApp for PongApp {
                 } else {
                     ProcessResponse::DontProcess
                 }
-            },
-            ProspectEvent::KeyboardInput(_key, ElementState::Released) =>
-            {
+            }
+            ProspectEvent::KeyboardInput(_key, ElementState::Released) => {
                 ProcessResponse::DontProcess
             }
             ProspectEvent::CursorMoveEvent(cursor_pos) => {
