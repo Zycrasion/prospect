@@ -1,4 +1,4 @@
-use vecto_rs::positional::Vector;
+use vecto_rs::linear::Vector;
 use winit::{event::{VirtualKeyCode, ElementState}, dpi::PhysicalSize};
 
 use crate::abstraction::prospect_window::ProspectWindow;

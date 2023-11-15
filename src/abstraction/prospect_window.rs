@@ -1,7 +1,7 @@
 use crate::prospect_app::ProspectApp;
 use crate::prospect_shader_manager::ProspectShaderManager;
 use crate::prospect_app::*;
-use vecto_rs::positional::Vector;
+use vecto_rs::linear::{Vector, VectorTrait};
 use wgpu::{
     Backends, Device, Queue, RenderPipeline, Surface, SurfaceConfiguration, VertexBufferLayout,
 };

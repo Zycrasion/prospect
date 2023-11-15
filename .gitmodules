@@ -1,3 +1,6 @@
 [submodule "crates/prospect-obj"]
 	path = crates/prospect-obj
 	url = https://github.com/Zycrasion/prospect-obj.git
+[submodule "crates/vecto-rs"]
+	path = crates/vecto-rs
+	url = https://github.com/Zycrasion/vecto-rs.git

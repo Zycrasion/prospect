@@ -1,5 +1,5 @@
 use bytemuck::{Pod, Zeroable};
-use vecto_rs::positional::Vector;
+use vecto_rs::linear::Vector;
 use wgpu::{VertexBufferLayout, VertexStepMode, VertexAttribute, VertexFormat, BufferAddress};
 
 #[repr(C)]
