@@ -5,9 +5,9 @@ use std::collections::HashMap;
 use wgpu::{Buffer, BufferUsages, RenderPass, Device};
 
 
-use crate::{prospect_shape::ProspectShape};
+use crate::prospect_shape::ProspectShape;
 use crate::prospect_shader_manager::*;
-use super::{vertex::{Vertex}, graphics_context::GraphicsContext};
+use super::{vertex::Vertex, graphics_context::GraphicsContext};
 
 pub trait Meshable
 {

@@ -1,5 +1,5 @@
 use vecto_rs::linear::Vector;
-use winit::{event::{VirtualKeyCode, ElementState}};
+use winit::event::{VirtualKeyCode, ElementState};
 
 use crate::abstraction::prospect_window::ProspectWindow;
 

@@ -3,7 +3,7 @@ use prospect::{
     prospect_app::{ProcessResponse, ProspectApp, ProspectEvent}, prospect_shape::ProspectShape,
 };
 use wgpu::SurfaceError;
-use winit::{event::VirtualKeyCode};
+use winit::event::VirtualKeyCode;
 
 const TRIANGLE : ProspectShape<&[Vertex], &[u16]> = ProspectShape
 {

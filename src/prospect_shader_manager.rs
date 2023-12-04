@@ -1,4 +1,4 @@
-use std::{collections::HashMap};
+use std::collections::HashMap;
 
 use wgpu::{RenderPipeline, RenderPass, Device, BindGroup};
 

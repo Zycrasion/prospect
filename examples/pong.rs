@@ -3,11 +3,11 @@ use prospect::{
         high_level_abstraction::HighLevelGraphicsContext,
         mesh::{Mesh, Meshable},
         prospect_window::ProspectWindow,
-        shader::{BasicShader},
-        vertex::{Vertex}, graphics_context::GraphicsContext,
+        shader::BasicShader,
+        vertex::Vertex, graphics_context::GraphicsContext,
     },
     prospect_app::{ProcessResponse, ProspectApp, ProspectEvent},
-    prospect_shape::ProspectShape, shaders::{textured_shader::{TexturedShader}},
+    prospect_shape::ProspectShape, shaders::textured_shader::TexturedShader,
 };
 use wgpu::SurfaceError;
 use winit::event::{ElementState, VirtualKeyCode};

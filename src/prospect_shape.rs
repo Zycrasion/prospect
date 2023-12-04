@@ -1,6 +1,6 @@
 
 
-use crate::abstraction::vertex::{Vertex};
+use crate::abstraction::vertex::Vertex;
 
 pub struct ProspectShape<VecList, IndexList>
     where   VecList : Into<Vec<Vertex>>,

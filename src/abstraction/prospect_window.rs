@@ -9,12 +9,12 @@ use winit::{
     dpi::PhysicalSize,
     event::{Event, VirtualKeyCode, WindowEvent, ElementState},
     event_loop::{ControlFlow, EventLoop},
-    window::{Window},
+    window::Window,
 };
 
 use super::{
     high_level_abstraction::HighLevelGraphicsContext,
-    shader::{ProspectShader},
+    shader::ProspectShader,
 };
 
 pub struct ProspectWindow {
