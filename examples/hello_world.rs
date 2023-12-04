@@ -1,9 +1,9 @@
 use prospect::{
-    abstraction::{prospect_window::ProspectWindow, graphics_context::GraphicsContext, high_level_abstraction::HighLevelGraphicsContext, mesh::{Mesh, Meshable}, shader::BasicShader, vertex::Vertex},
-    prospect_app::{ProcessResponse, ProspectApp, ProspectEvent}, prospect_shape::ProspectShape, prospect_shader_manager::ProspectShaderManager,
+    abstraction::{prospect_window::ProspectWindow, high_level_abstraction::HighLevelGraphicsContext, mesh::{Mesh, Meshable}, shader::BasicShader, vertex::Vertex},
+    prospect_app::{ProcessResponse, ProspectApp, ProspectEvent}, prospect_shape::ProspectShape,
 };
 use wgpu::SurfaceError;
-use winit::{event::VirtualKeyCode, window};
+use winit::{event::VirtualKeyCode};
 
 const TRIANGLE : ProspectShape<&[Vertex], &[u16]> = ProspectShape
 {
