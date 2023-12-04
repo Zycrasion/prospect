@@ -2,7 +2,7 @@ use wgpu::{
     BlendState, ColorTargetState, ColorWrites, Device, FragmentState, ShaderModule, VertexState, RenderPipeline, ShaderStages, TextureViewDimension, TextureSampleType, BindGroupLayout, BindGroup, Sampler, TextureView,
 };
 
-use crate::{abstraction::{high_level_abstraction::HighLevelGraphicsContext, shader::ProspectShader, vertex::Vertex, prospect_window::ProspectWindow, graphics_context::GraphicsContext}, utils::prospect_fs::read_file_panic};
+use crate::{abstraction::{high_level_abstraction::HighLevelGraphicsContext, shader::ProspectShader, vertex::Vertex, prospect_window::ProspectWindow, graphics_context::GraphicsContext}, utils::prospect_fs::read_file_panic, prospect_shader_manager::ProspectBindGroupIndex};
 
 #[derive(Debug)]
 pub struct TexturedShaderTexture
@@ -79,5 +79,12 @@ impl TexturedShader {
         let view_resource = GraphicsContext::create_texture_view_resource(0, texture);
         let sampler_resource = GraphicsContext::create_sampler_resource(1, &self.sampler);
         (0, GraphicsContext::create_bind_group(window.get_device(), name, &self.bind_layout, &vec![view_resource, sampler_resource]))
+    }
+
+    pub fn register_texture(&self, name: &str, bytes : &[u8], window: &mut ProspectWindow) -> ProspectBindGroupIndex
+    {
+        let texture_view = HighLevelGraphicsContext::create_texture_from_file(name, bytes, window);
+        let bind_group = self.create_texture(window, &texture_view, name);
+        window.add_bind_group(name, bind_group.1).expect("Unable to register texture (TexturedShader)")
     }
 }

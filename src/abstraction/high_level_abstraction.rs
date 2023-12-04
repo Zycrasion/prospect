@@ -85,4 +85,10 @@ impl HighLevelGraphicsContext {
         let pipeline = GraphicsContext::create_render_pipeline(name, &layout, shader.fragment_state(), shader.vertex_state(), device);
         pipeline
     }
+
+    pub fn create_texture_from_file(name: &str, bytes : &[u8], window: &ProspectWindow) -> TextureView
+    {
+        let texture = GraphicsContext::create_texture(name, bytes, window.get_device(), window.get_queue());
+        GraphicsContext::create_texture_view(&texture)
+    }
 }

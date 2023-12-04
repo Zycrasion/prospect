@@ -78,11 +78,7 @@ impl PongApp {
         let main_shader = BasicShader::new(&window);
         let main_shader = window.add_shader(&main_shader).expect("Unable to register main_shader");
 
-        let texture = GraphicsContext::create_texture("car01_Car_Pallete.png", include_bytes!("../res/car01_Car_Pallete.png"), &window.get_device(), &window.get_queue());
-        let texture = GraphicsContext::create_texture_view(&texture);
-        let texture = image_shader.create_texture(window, &texture, "car01_Car_Pallete.png");
-        let texture = window.add_bind_group("Car Texture", texture.1).expect("Unable to register Car Texture");
-        
+        let texture = image_shader.register_texture("Car Texture", include_bytes!("../res/car01_Car_Pallete.png"), window);
         let mut pentagon_mesh = Mesh::from_shape(&PENTAGON, window.get_device(), &image_shader_key);
         pentagon_mesh.set_bind_group(0, &texture);
         
