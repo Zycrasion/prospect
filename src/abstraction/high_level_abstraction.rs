@@ -1,6 +1,6 @@
 use wgpu::{
     Backends, CommandEncoder, Device, Queue, RenderPass, Surface, SurfaceConfiguration,
-    SurfaceTexture, Texture, TextureView, RenderPipeline,
+    SurfaceTexture, Texture, TextureView, RenderPipeline, BindGroupLayout,
 };
 use winit::{event_loop::EventLoop, window::Window};
 
@@ -79,9 +79,9 @@ impl HighLevelGraphicsContext {
         output.present()
     }
 
-    pub fn create_render_pipeline(name: &str, device : &Device, shader : &impl ProspectShader) -> RenderPipeline
+    pub fn create_render_pipeline(name: &str, device : &Device, shader : &impl ProspectShader, bind_groups : Option<&Vec<&BindGroupLayout>>) -> RenderPipeline
     {
-        let layout = GraphicsContext::create_pipeline_layout(name, device);
+        let layout = GraphicsContext::create_pipeline_layout(name, device, bind_groups.unwrap_or(&vec![]));
         let pipeline = GraphicsContext::create_render_pipeline(name, &layout, shader.fragment_state(), shader.vertex_state(), device);
         pipeline
     }

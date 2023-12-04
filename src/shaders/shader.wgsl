@@ -1,7 +1,7 @@
 struct VertexInput
 {
     @location(0) position : vec3<f32>,
-    @location(1) colour : vec3<f32>
+    @location(1) colour : vec2<f32>
 };
 
 struct VertexOutput
@@ -16,7 +16,7 @@ fn vs_main(
 ) -> VertexOutput   
 {
     var out : VertexOutput;
-    out.colour = model.colour;
+    out.colour = vec3<f32>(model.colour, 1.0);
     out.clip_position = vec4<f32>(model.position, 1.0);
     return out;
 }

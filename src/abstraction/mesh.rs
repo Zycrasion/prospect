@@ -4,9 +4,9 @@ use bytemuck::NoUninit;
 use wgpu::{Buffer, BufferUsages, RenderPass, Device, IndexFormat, RenderPipeline};
 use winit::window::Window;
 
-use crate::prospect_shape::ProspectShape;
+use crate::{prospect_shape::ProspectShape, shaders::material::Material};
 use crate::prospect_shader_manager::*;
-use super::{vertex::Vertex, graphics_context::GraphicsContext, prospect_window::ProspectWindow};
+use super::{vertex::{Vertex}, graphics_context::GraphicsContext, prospect_window::ProspectWindow};
 
 pub trait Meshable
 {
@@ -19,7 +19,8 @@ pub struct Mesh
     vertex_buffer : Buffer,
     index_buffer : Buffer,
     index_count : u32,
-    render_pipeline : ProspectShaderIndex
+    render_pipeline : ProspectShaderIndex,
+    pub material : Material
 }
 
 impl Mesh
@@ -65,7 +66,8 @@ impl Mesh
             vertex_buffer,
             index_buffer,
             index_count: count as u32,
-            render_pipeline : pipeline.clone()
+            render_pipeline : pipeline.clone(),
+            material : Material::default()
         }
     }
 }
@@ -74,6 +76,7 @@ impl Meshable for Mesh
 {
     fn draw<'life>(&'life self, render_pass : &mut RenderPass<'life>, shader_manager : &'life ProspectShaderManager) {
         shader_manager.apply_render_pipeline(&self.render_pipeline, render_pass);
+        self.material.apply_to_render_pass(render_pass);
         render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
         render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);  
         render_pass.draw_indexed(0..self.index_count, 0, 0..1); 

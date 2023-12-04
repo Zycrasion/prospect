@@ -1124,7 +1124,7 @@ dependencies = [
  "log",
  "pollster",
  "prospect-obj",
- "vecto-rs 1.1.2",
+ "vecto-rs",
  "wgpu",
  "winit",
 ]
@@ -1132,8 +1132,9 @@ dependencies = [
 [[package]]
 name = "prospect-obj"
 version = "0.1.0"
+source = "git+https://github.com/Zycrasion/prospect-obj#9810b1a0e38e8b7242509e4330d01d563376e4b7"
 dependencies = [
- "vecto-rs 1.1.1",
+ "vecto-rs",
 ]
 
 [[package]]
@@ -1438,12 +1439,8 @@ checksum = "f1bddf1187be692e79c5ffeab891132dfb0f236ed36a43c7ed39f1165ee20191"
 
 [[package]]
 name = "vecto-rs"
-version = "1.1.1"
-source = "git+https://github.com/Zycrasion/vecto-rs#a285563f61a06c22575c132cdde0e7c1bca5ea03"
-
-[[package]]
-name = "vecto-rs"
 version = "1.1.2"
+source = "git+https://github.com/Zycrasion/vecto-rs#813c2a283f65efd68bd36fd9229f6a67868b4e40"
 
 [[package]]
 name = "version_check"

@@ -13,7 +13,7 @@ pub trait ProspectShader : Sized {
 
     fn build_render_pipeline(&self, device : &Device) -> RenderPipeline
     {
-        HighLevelGraphicsContext::create_render_pipeline(self.get_name(), device, self)
+        HighLevelGraphicsContext::create_render_pipeline(self.get_name(), device, self, None)
     }
 }
 

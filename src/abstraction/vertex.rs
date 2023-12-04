@@ -1,13 +1,13 @@
-use bytemuck::{Pod, Zeroable};
+use bytemuck::{Pod, Zeroable, NoUninit};
 use vecto_rs::linear::Vector;
 use wgpu::{VertexBufferLayout, VertexStepMode, VertexAttribute, VertexFormat, BufferAddress};
 
+#[derive(Clone, Copy, Pod, Zeroable)]
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Pod, Zeroable)]
 pub struct Vertex
 {
     pub position : [f32; 3],
-    pub colour : [f32; 3]
+    pub uv : [f32; 2]
 }
 
 impl Vertex
@@ -22,15 +22,10 @@ impl Vertex
                 shader_location: 0,
             },
             VertexAttribute {
-                format: VertexFormat::Float32x3,
+                format: VertexFormat::Float32x2,
                 offset: std::mem::size_of::<[f32; 3]>() as BufferAddress,
                 shader_location: 1,
             },
         ],
     };
-
-
-    pub fn create_vertex_buffer_layout<'lifetime>() -> VertexBufferLayout<'lifetime> {
-        Self::VERTEX_BUFFER_LAYOUT
-    }
 }

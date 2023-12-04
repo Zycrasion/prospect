@@ -1,15 +1,17 @@
 use bytemuck::NoUninit;
+use image::ImageBuffer;
 use wgpu::{
     util::{BufferInitDescriptor, DeviceExt},
     Adapter, Backends, BlendState, Buffer, BufferAddress, Color, ColorTargetState, ColorWrites,
-    CommandEncoder, CommandEncoderDescriptor, Device, DeviceDescriptor, Dx12Compiler, Face,
-    Features, FragmentState, FrontFace, Instance, InstanceDescriptor, Limits, LoadOp,
-    MultisampleState, Operations, PipelineLayout, PipelineLayoutDescriptor, PolygonMode,
-    PowerPreference, PrimitiveState, PrimitiveTopology, Queue, RenderPass,
+    CommandEncoder, CommandEncoderDescriptor, Device, DeviceDescriptor, Dx12Compiler, Extent3d,
+    Face, Features, FragmentState, FrontFace, ImageCopyTexture, Instance, InstanceDescriptor,
+    Limits, LoadOp, MultisampleState, Operations, PipelineLayout, PipelineLayoutDescriptor,
+    PolygonMode, PowerPreference, PrimitiveState, PrimitiveTopology, Queue, RenderPass,
     RenderPassColorAttachment, RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor,
     RequestDeviceError, ShaderModule, ShaderModuleDescriptor, Surface, SurfaceConfiguration,
-    SurfaceTexture, TextureUsages, TextureView, TextureViewDescriptor, VertexAttribute,
-    VertexBufferLayout, VertexFormat, VertexState, VertexStepMode,
+    SurfaceTexture, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages, TextureView,
+    TextureViewDescriptor, VertexAttribute, VertexBufferLayout, VertexFormat, VertexState,
+    VertexStepMode, Origin3d, TextureAspect, ImageDataLayout, Texture, SamplerDescriptor, AddressMode, FilterMode, Sampler, BindGroupEntry, BindGroupLayoutEntry, BindGroupLayout, BindGroupLayoutDescriptor, ShaderStages, BindingType, TextureViewDimension, TextureSampleType, SamplerBindingType, BindingResource, BindGroup, BindGroupDescriptor,
 };
 use winit::{
     dpi::{PhysicalSize, Size},
@@ -17,7 +19,7 @@ use winit::{
     window::{Window, WindowBuilder},
 };
 
-use super::vertex::Vertex;
+use super::{vertex::Vertex, shader};
 
 pub struct GraphicsContext;
 
@@ -163,10 +165,10 @@ impl GraphicsContext {
         })
     }
 
-    pub fn create_pipeline_layout(name: &str, device: &Device) -> PipelineLayout {
+    pub fn create_pipeline_layout(name: &str, device: &Device, bind_group_layouts : &Vec<&BindGroupLayout>) -> PipelineLayout {
         device.create_pipeline_layout(&PipelineLayoutDescriptor {
             label: Some(name),
-            bind_group_layouts: &[],
+            bind_group_layouts: &bind_group_layouts,
             push_constant_ranges: &[],
         })
     }
@@ -213,5 +215,122 @@ impl GraphicsContext {
             contents: bytemuck::cast_slice(contents),
             usage,
         })
+    }
+
+    pub fn create_texture(label: &str, bytes: &[u8], device: &Device, queue: &Queue) -> Texture {
+        let img = image::load_from_memory(bytes).unwrap();
+        let raw = img.to_rgba8();
+        let dimensions = raw.dimensions();
+
+        let size = Extent3d {
+            width: dimensions.0,
+            height: dimensions.1,
+            depth_or_array_layers: 1,
+        };
+
+        let texture = device.create_texture(&TextureDescriptor {
+            label: Some(label),
+            size,
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: TextureDimension::D2,
+            format: TextureFormat::Rgba8UnormSrgb,
+            usage: TextureUsages::TEXTURE_BINDING | TextureUsages::COPY_DST,
+            view_formats: &[],
+        });
+
+        queue.write_texture(
+            ImageCopyTexture {
+                texture: &texture,
+                mip_level: 0,
+                origin: Origin3d::ZERO,
+                aspect: TextureAspect::All,
+            },
+            &raw,
+            ImageDataLayout
+            {
+                offset: 0,
+                bytes_per_row: Some(4 * dimensions.0),
+                rows_per_image: Some(dimensions.1),
+            },
+            size,
+        );
+
+        texture
+    }
+
+    pub fn create_texture_view(texture : &Texture) -> TextureView
+    {
+        texture.create_view(&TextureViewDescriptor::default())
+    }
+
+    pub fn create_sampler(label: &str, device: &Device, mag_filter : Option<FilterMode>, min_filter : Option<FilterMode>) -> Sampler
+    {
+        let sampler = device.create_sampler(
+            &SamplerDescriptor
+            {
+                label : Some(label),
+                address_mode_u : AddressMode::ClampToEdge,
+                address_mode_v : AddressMode::ClampToEdge,
+                address_mode_w : AddressMode::ClampToEdge,
+                mag_filter : mag_filter.unwrap_or(FilterMode::Linear),
+                min_filter: min_filter.unwrap_or(FilterMode::Nearest),
+                mipmap_filter : FilterMode::Nearest,
+                ..Default::default()
+            }
+        );
+        sampler
+    }
+
+    pub fn create_texture_binding_type(multisampled : bool, view_dimension : TextureViewDimension, sample_type : TextureSampleType) -> BindingType
+    {
+        BindingType::Texture { sample_type, view_dimension, multisampled }
+    }
+
+    pub fn create_sample_binding_type(sampler_binding_type : SamplerBindingType) -> BindingType
+    {
+        BindingType::Sampler(sampler_binding_type)
+    }
+
+    pub fn create_bind_group_layout_entry(binding : u32, shader_stage : ShaderStages, ty : BindingType) -> BindGroupLayoutEntry
+    {
+        BindGroupLayoutEntry { binding, visibility: shader_stage, ty, count : None }
+    }
+
+    pub fn create_bind_group_layout(device : &Device, label: &str, entries : &Vec<BindGroupLayoutEntry>) -> BindGroupLayout
+    {
+        device.create_bind_group_layout(
+            &BindGroupLayoutDescriptor
+            {
+                label: Some(label),
+                entries: &entries,
+            }
+        )
+    }
+
+    pub fn create_texture_view_resource(binding : u32, view : &TextureView) -> BindGroupEntry
+    {
+        BindGroupEntry
+        {
+            binding,
+            resource: BindingResource::TextureView(view),
+        }
+    }
+
+    pub fn create_sampler_resource(binding : u32, sampler : &Sampler) -> BindGroupEntry
+    {
+        BindGroupEntry { binding, resource: BindingResource::Sampler(sampler) }
+    }
+
+    pub fn create_bind_group(device : &Device, label: &str, bind_group_layout : &BindGroupLayout, entries : &Vec<BindGroupEntry>) -> BindGroup
+    {
+        device.create_bind_group(
+            &BindGroupDescriptor
+            {
+                label: Some(label),
+                entries: &entries,
+                layout: &bind_group_layout,
+            }
+        )
     }
 }
