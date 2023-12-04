@@ -85,6 +85,6 @@ impl TexturedShader {
     {
         let texture_view = HighLevelGraphicsContext::create_texture_from_file(name, bytes, window);
         let bind_group = self.create_texture(window, &texture_view, name);
-        window.add_bind_group(name, bind_group.1).expect("Unable to register texture (TexturedShader)")
+        window.add_bind_group(name, bind_group.1)
     }
 }

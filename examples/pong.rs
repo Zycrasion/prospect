@@ -42,15 +42,15 @@ const TRIANGLE: ProspectShape<&[Vertex], &[u16]> = ProspectShape {
     vertices: &[
         Vertex {
             position: [0.0, 0.5, 0.],
-            uv : [0., 0.]
+            uv : [1., 0.]
         },
         Vertex {
             position: [0.5, -0.5, 0.],
-            uv : [0., 0.]
+            uv : [0., 1.]
         },
         Vertex {
             position: [-0.5, -0.5, 0.],
-            uv : [0., 0.]
+            uv : [1., 1.]
         },
     ],
     indices: None,
@@ -74,9 +74,9 @@ pub struct PongApp {
 impl PongApp {
     fn new(window: &mut ProspectWindow) -> Self {
         let image_shader = TexturedShader::new(&window);
-        let image_shader_key = window.add_shader(&image_shader).expect("Unable to register TexturedShader");
+        let image_shader_key = window.add_shader(&image_shader);
         let main_shader = BasicShader::new(&window);
-        let main_shader = window.add_shader(&main_shader).expect("Unable to register main_shader");
+        let main_shader = window.add_shader(&main_shader);
 
         let texture = image_shader.register_texture("Car Texture", include_bytes!("../res/car01_Car_Pallete.png"), window);
         let mut pentagon_mesh = Mesh::from_shape(&PENTAGON, window.get_device(), &image_shader_key);

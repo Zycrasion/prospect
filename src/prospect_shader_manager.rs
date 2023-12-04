@@ -23,16 +23,11 @@ impl ProspectShaderManager
         Self { pipelines: HashMap::new(), bind_groups : HashMap::new() }
     }
 
-    pub fn add_shader(&mut self, shader : &impl ProspectShader, device : &Device) -> Option<ProspectShaderIndex>
+    pub fn add_shader(&mut self, shader : &impl ProspectShader, device : &Device) -> ProspectShaderIndex
     {
-        eprintln!("TODO: CHANGE METHOD OF ADDING BINDGROUPS/SHADERS TO REGISTRY");
-        let result = self.pipelines.insert(ProspectShaderIndex(shader.get_name().to_owned()), shader.build_render_pipeline(device));
-        if result.is_some()
-        {
-            return None;
-        }
+        let _ = self.pipelines.insert(ProspectShaderIndex(shader.get_name().to_owned()), shader.build_render_pipeline(device));
 
-        Some(ProspectShaderIndex(shader.get_name().to_owned()))
+        ProspectShaderIndex(shader.get_name().to_owned())
     }
 
     pub fn apply_render_pipeline<'a>(&'a self, key : &ProspectShaderIndex, render_pass : &mut RenderPass<'a>)
@@ -45,16 +40,10 @@ impl ProspectShaderManager
         }
     }
 
-    pub fn add_bind_group<S : AsRef<str>>(&mut self, name : S,  bind_group : BindGroup) -> Option<ProspectBindGroupIndex>
+    pub fn add_bind_group<S : AsRef<str>>(&mut self, name : S,  bind_group : BindGroup) -> ProspectBindGroupIndex
     {
-        eprintln!("TODO: CHANGE METHOD OF ADDING BINDGROUPS/SHADERS TO REGISTRY");
-        let result = self.bind_groups.insert(ProspectBindGroupIndex(name.as_ref().to_string()), bind_group);
-        if result.is_some()
-        {
-            return None;
-        }
-
-        Some(ProspectBindGroupIndex(name.as_ref().to_string()))
+        let _ = self.bind_groups.insert(ProspectBindGroupIndex(name.as_ref().to_string()), bind_group);
+        ProspectBindGroupIndex(name.as_ref().to_string())
     }
 
     pub fn apply_bind_group<'a>(&'a self, render_pass : &mut RenderPass<'a> ,key : &ProspectBindGroupIndex, loc : u32, offsets : &[u32])

@@ -33,7 +33,7 @@ impl HelloWorld
     pub fn new(window : &mut ProspectWindow) -> Self
     {
         let basic_shader = BasicShader::new(window);
-        let basic_shader = window.add_shader(&basic_shader).expect("Unable to register BasicShader");
+        let basic_shader = window.add_shader(&basic_shader);
 
         let mesh = Mesh::from_shape(&TRIANGLE, window.get_device(), &basic_shader);
 
