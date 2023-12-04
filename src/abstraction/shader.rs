@@ -1,6 +1,5 @@
 use wgpu::{
-    BlendState, ColorTargetState, ColorWrites, Device, FragmentState, ShaderModule, Surface,
-    SurfaceConfiguration, TextureFormat, VertexState, VertexBufferLayout, RenderPipeline,
+    BlendState, ColorTargetState, ColorWrites, Device, FragmentState, ShaderModule, VertexState, RenderPipeline,
 };
 
 use super::{graphics_context::GraphicsContext, vertex::Vertex, high_level_abstraction::HighLevelGraphicsContext, prospect_window::ProspectWindow};

@@ -1,5 +1,5 @@
 use vecto_rs::linear::Vector;
-use winit::{event::{VirtualKeyCode, ElementState}, dpi::PhysicalSize};
+use winit::{event::{VirtualKeyCode, ElementState}};
 
 use crate::abstraction::prospect_window::ProspectWindow;
 
@@ -24,7 +24,7 @@ pub trait ProspectApp
     
     fn draw(&mut self, window : &ProspectWindow) -> Result<(), wgpu::SurfaceError>;
 
-    fn process(&mut self, event : ProspectEvent) -> ProcessResponse
+    fn process(&mut self, _event : ProspectEvent) -> ProcessResponse
     {
         ProcessResponse::ProspectProcess
     }

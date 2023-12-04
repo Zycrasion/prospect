@@ -3,7 +3,7 @@ use crate::prospect_shader_manager::ProspectShaderManager;
 use crate::prospect_app::*;
 use vecto_rs::linear::{Vector, VectorTrait};
 use wgpu::{
-    Backends, Device, Queue, RenderPipeline, Surface, SurfaceConfiguration, VertexBufferLayout, BindGroup,
+    Device, Queue, Surface, SurfaceConfiguration, BindGroup,
 };
 use winit::{
     dpi::PhysicalSize,
@@ -13,9 +13,8 @@ use winit::{
 };
 
 use super::{
-    graphics_context::GraphicsContext,
     high_level_abstraction::HighLevelGraphicsContext,
-    shader::{BasicShader, ProspectShader},
+    shader::{ProspectShader},
 };
 
 pub struct ProspectWindow {

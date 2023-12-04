@@ -1,16 +1,16 @@
 use prospect::{
-    abstraction::{prospect_window::ProspectWindow, graphics_context::GraphicsContext, high_level_abstraction::HighLevelGraphicsContext, mesh::{Mesh, Meshable}, vertex::VertexPOSCOL, shader::BasicShader},
+    abstraction::{prospect_window::ProspectWindow, graphics_context::GraphicsContext, high_level_abstraction::HighLevelGraphicsContext, mesh::{Mesh, Meshable}, shader::BasicShader, vertex::Vertex},
     prospect_app::{ProcessResponse, ProspectApp, ProspectEvent}, prospect_shape::ProspectShape, prospect_shader_manager::ProspectShaderManager,
 };
 use wgpu::SurfaceError;
 use winit::{event::VirtualKeyCode, window};
 
-const TRIANGLE : ProspectShape<&[VertexPOSCOL], &[u16]> = ProspectShape
+const TRIANGLE : ProspectShape<&[Vertex], &[u16]> = ProspectShape
 {
     vertices: &[
-        VertexPOSCOL { position : [  0.0,  0.5, 0.], colour : [1., 0., 0.] },
-        VertexPOSCOL { position : [  0.5, -0.5, 0.], colour : [0., 1., 0.] },
-        VertexPOSCOL { position : [ -0.5, -0.5, 0.], colour : [0., 0., 1.] },
+        Vertex { position : [  0.0,  0.5, 0.], uv : [0.5, 0.0] },
+        Vertex { position : [  0.5, -0.5, 0.], uv : [1.0, 1.0] },
+        Vertex { position : [ -0.5, -0.5, 0.], uv : [0.0, 1.0] },
     ],
     indices: None,
 };

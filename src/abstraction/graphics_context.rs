@@ -1,8 +1,8 @@
 use bytemuck::NoUninit;
-use image::ImageBuffer;
+
 use wgpu::{
     util::{BufferInitDescriptor, DeviceExt},
-    Adapter, Backends, BlendState, Buffer, BufferAddress, Color, ColorTargetState, ColorWrites,
+    Adapter, Backends, Buffer, Color,
     CommandEncoder, CommandEncoderDescriptor, Device, DeviceDescriptor, Dx12Compiler, Extent3d,
     Face, Features, FragmentState, FrontFace, ImageCopyTexture, Instance, InstanceDescriptor,
     Limits, LoadOp, MultisampleState, Operations, PipelineLayout, PipelineLayoutDescriptor,
@@ -10,8 +10,7 @@ use wgpu::{
     RenderPassColorAttachment, RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor,
     RequestDeviceError, ShaderModule, ShaderModuleDescriptor, Surface, SurfaceConfiguration,
     SurfaceTexture, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages, TextureView,
-    TextureViewDescriptor, VertexAttribute, VertexBufferLayout, VertexFormat, VertexState,
-    VertexStepMode, Origin3d, TextureAspect, ImageDataLayout, Texture, SamplerDescriptor, AddressMode, FilterMode, Sampler, BindGroupEntry, BindGroupLayoutEntry, BindGroupLayout, BindGroupLayoutDescriptor, ShaderStages, BindingType, TextureViewDimension, TextureSampleType, SamplerBindingType, BindingResource, BindGroup, BindGroupDescriptor,
+    TextureViewDescriptor, VertexState, Origin3d, TextureAspect, ImageDataLayout, Texture, SamplerDescriptor, AddressMode, FilterMode, Sampler, BindGroupEntry, BindGroupLayoutEntry, BindGroupLayout, BindGroupLayoutDescriptor, ShaderStages, BindingType, TextureViewDimension, TextureSampleType, SamplerBindingType, BindingResource, BindGroup, BindGroupDescriptor,
 };
 use winit::{
     dpi::{PhysicalSize, Size},
@@ -19,7 +18,7 @@ use winit::{
     window::{Window, WindowBuilder},
 };
 
-use super::{vertex::Vertex, shader};
+
 
 pub struct GraphicsContext;
 

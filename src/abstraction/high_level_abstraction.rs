@@ -1,6 +1,6 @@
 use wgpu::{
     Backends, CommandEncoder, Device, Queue, RenderPass, Surface, SurfaceConfiguration,
-    SurfaceTexture, Texture, TextureView, RenderPipeline, BindGroupLayout,
+    SurfaceTexture, TextureView, RenderPipeline, BindGroupLayout,
 };
 use winit::{event_loop::EventLoop, window::Window};
 

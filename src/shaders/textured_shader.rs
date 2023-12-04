@@ -1,6 +1,5 @@
 use wgpu::{
-    BlendState, ColorTargetState, ColorWrites, Device, FragmentState, ShaderModule, Surface,
-    SurfaceConfiguration, TextureFormat, VertexState, VertexBufferLayout, RenderPipeline, ShaderStages, TextureViewDimension, TextureSampleType, BindGroupLayout, BindGroup, Sampler, Texture, TextureView,
+    BlendState, ColorTargetState, ColorWrites, Device, FragmentState, ShaderModule, VertexState, RenderPipeline, ShaderStages, TextureViewDimension, TextureSampleType, BindGroupLayout, BindGroup, Sampler, TextureView,
 };
 
 use crate::{abstraction::{high_level_abstraction::HighLevelGraphicsContext, shader::ProspectShader, vertex::Vertex, prospect_window::ProspectWindow, graphics_context::GraphicsContext}, utils::prospect_fs::read_file_panic};

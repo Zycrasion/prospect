@@ -1,13 +1,13 @@
 use std::collections::HashMap;
-use std::{rc::Rc, fmt::Write};
 
-use bytemuck::NoUninit;
-use wgpu::{Buffer, BufferUsages, RenderPass, Device, IndexFormat, RenderPipeline};
-use winit::window::Window;
+
+
+use wgpu::{Buffer, BufferUsages, RenderPass, Device};
+
 
 use crate::{prospect_shape::ProspectShape};
 use crate::prospect_shader_manager::*;
-use super::{vertex::{Vertex}, graphics_context::GraphicsContext, prospect_window::ProspectWindow};
+use super::{vertex::{Vertex}, graphics_context::GraphicsContext};
 
 pub trait Meshable
 {
