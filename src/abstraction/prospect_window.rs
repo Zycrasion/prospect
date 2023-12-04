@@ -1,9 +1,9 @@
-use crate::prospect_app::ProspectApp;
+use crate::{prospect_app::ProspectApp, prospect_shader_manager::ProspectBindGroupIndex};
 use crate::prospect_shader_manager::ProspectShaderManager;
 use crate::prospect_app::*;
 use vecto_rs::linear::{Vector, VectorTrait};
 use wgpu::{
-    Backends, Device, Queue, RenderPipeline, Surface, SurfaceConfiguration, VertexBufferLayout,
+    Backends, Device, Queue, RenderPipeline, Surface, SurfaceConfiguration, VertexBufferLayout, BindGroup,
 };
 use winit::{
     dpi::PhysicalSize,
@@ -77,6 +77,11 @@ impl ProspectWindow {
     pub fn add_shader(&mut self, shader : &impl ProspectShader) -> Option<crate::prospect_shader_manager::ProspectShaderIndex>
     {
         self.shader_manager.add_shader(shader, &self.device)
+    }
+
+    pub fn add_bind_group<S : AsRef<str>>(&mut self, name : S,  bind_group : BindGroup) -> Option<ProspectBindGroupIndex>
+    {
+        self.shader_manager.add_bind_group(name, bind_group)
     }
 
     fn process_input(

@@ -7,7 +7,7 @@ use prospect::{
         vertex::{Vertex}, graphics_context::GraphicsContext,
     },
     prospect_app::{ProcessResponse, ProspectApp, ProspectEvent},
-    prospect_shape::ProspectShape, prospect_shader_manager::ProspectShaderManager, shaders::{textured_shader::{TexturedShader, TexturedShaderTexture}, material::Material},
+    prospect_shape::ProspectShape, prospect_shader_manager::ProspectShaderManager, shaders::{textured_shader::{TexturedShader, TexturedShaderTexture}},
 };
 use wgpu::SurfaceError;
 use winit::event::{ElementState, VirtualKeyCode};
@@ -78,16 +78,15 @@ impl PongApp {
         let main_shader = BasicShader::new(&window);
         let main_shader = window.add_shader(&main_shader).expect("Unable to register main_shader");
 
-        let tex = GraphicsContext::create_texture("car01_Car_Pallete.png", include_bytes!("../res/car01_Car_Pallete.png"), &window.get_device(), &window.get_queue());
-        let tex = GraphicsContext::create_texture_view(&tex);
-        let texture = image_shader.create_texture(window, &tex, "car01_Car_Pallete.png");
+        let texture = GraphicsContext::create_texture("car01_Car_Pallete.png", include_bytes!("../res/car01_Car_Pallete.png"), &window.get_device(), &window.get_queue());
+        let texture = GraphicsContext::create_texture_view(&texture);
+        let texture = image_shader.create_texture(window, &texture, "car01_Car_Pallete.png");
+        let texture = window.add_bind_group("Car Texture", texture.1).expect("Unable to register Car Texture");
         
         let mut pentagon_mesh = Mesh::from_shape(&PENTAGON, window.get_device(), &image_shader_key);
+        pentagon_mesh.set_bind_group(0, &texture);
+        
         let triangle_mesh = Mesh::from_shape(&TRIANGLE, window.get_device(), &main_shader);
-
-        pentagon_mesh.material = Material::TexturedMaterial(texture);
-
-        println!("{:#?}\n{:#?}", triangle_mesh, pentagon_mesh);
 
         Self {
             clear_col: (0., 0., 0.),

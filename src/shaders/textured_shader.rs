@@ -75,13 +75,10 @@ impl TexturedShader {
         }
     }
     
-    pub fn create_texture(&self, window : &ProspectWindow, texture : &TextureView, name : &str) -> TexturedShaderTexture
+    pub fn create_texture(&self, window : &ProspectWindow, texture : &TextureView, name : &str) -> (u32, BindGroup)
     {
         let view_resource = GraphicsContext::create_texture_view_resource(0, texture);
         let sampler_resource = GraphicsContext::create_sampler_resource(1, &self.sampler);
-        TexturedShaderTexture
-        {
-            group:  GraphicsContext::create_bind_group(window.get_device(), name, &self.bind_layout, &vec![view_resource, sampler_resource])
-        }
+        (0, GraphicsContext::create_bind_group(window.get_device(), name, &self.bind_layout, &vec![view_resource, sampler_resource]))
     }
 }

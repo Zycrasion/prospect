@@ -1,10 +1,11 @@
+use std::collections::HashMap;
 use std::{rc::Rc, fmt::Write};
 
 use bytemuck::NoUninit;
 use wgpu::{Buffer, BufferUsages, RenderPass, Device, IndexFormat, RenderPipeline};
 use winit::window::Window;
 
-use crate::{prospect_shape::ProspectShape, shaders::material::Material};
+use crate::{prospect_shape::ProspectShape};
 use crate::prospect_shader_manager::*;
 use super::{vertex::{Vertex}, graphics_context::GraphicsContext, prospect_window::ProspectWindow};
 
@@ -20,7 +21,7 @@ pub struct Mesh
     index_buffer : Buffer,
     index_count : u32,
     render_pipeline : ProspectShaderIndex,
-    pub material : Material
+    bind_groups : HashMap<u32, ProspectBindGroupIndex>
 }
 
 impl Mesh
@@ -67,8 +68,13 @@ impl Mesh
             index_buffer,
             index_count: count as u32,
             render_pipeline : pipeline.clone(),
-            material : Material::default()
+            bind_groups : HashMap::new()
         }
+    }
+
+    pub fn set_bind_group(&mut self, loc : u32, bind_group : &ProspectBindGroupIndex)
+    {
+        self.bind_groups.insert(loc, bind_group.clone());
     }
 }
 
@@ -76,7 +82,12 @@ impl Meshable for Mesh
 {
     fn draw<'life>(&'life self, render_pass : &mut RenderPass<'life>, shader_manager : &'life ProspectShaderManager) {
         shader_manager.apply_render_pipeline(&self.render_pipeline, render_pass);
-        self.material.apply_to_render_pass(render_pass);
+        
+        for bind_group in &self.bind_groups
+        {
+            shader_manager.apply_bind_group(render_pass, &bind_group.1, *bind_group.0, &[]);
+        }
+
         render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
         render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);  
         render_pass.draw_indexed(0..self.index_count, 0, 0..1); 
