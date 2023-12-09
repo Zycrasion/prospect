@@ -91,8 +91,6 @@ impl ProspectCamera {
         let view = Mat4::look_at_rh(&self.eye, &self.target, &self.up);
         let mut projection = Mat4::new();
         projection.set_perspective_matrix(self.fov, self.znear, self.zfar);
-        println!("{}", view);
-        panic!();
         OPENGL_TO_WGPU_MATRIX * projection * view
     }
 
