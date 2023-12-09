@@ -10,7 +10,7 @@ use wgpu::{
     RenderPassColorAttachment, RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor,
     RequestDeviceError, ShaderModule, ShaderModuleDescriptor, Surface, SurfaceConfiguration,
     SurfaceTexture, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages, TextureView,
-    TextureViewDescriptor, VertexState, Origin3d, TextureAspect, ImageDataLayout, Texture, SamplerDescriptor, AddressMode, FilterMode, Sampler, BindGroupEntry, BindGroupLayoutEntry, BindGroupLayout, BindGroupLayoutDescriptor, ShaderStages, BindingType, TextureViewDimension, TextureSampleType, SamplerBindingType, BindingResource, BindGroup, BindGroupDescriptor,
+    TextureViewDescriptor, VertexState, Origin3d, TextureAspect, ImageDataLayout, Texture, SamplerDescriptor, AddressMode, FilterMode, Sampler, BindGroupEntry, BindGroupLayoutEntry, BindGroupLayout, BindGroupLayoutDescriptor, ShaderStages, BindingType, TextureViewDimension, TextureSampleType, SamplerBindingType, BindingResource, BindGroup, BindGroupDescriptor, PresentMode,
 };
 use winit::{
     dpi::{PhysicalSize, Size},
@@ -103,12 +103,21 @@ impl GraphicsContext {
             panic!()
         }
 
+        let present_mode = if surface_caps.present_modes.contains(&PresentMode::Fifo)
+        {
+            PresentMode::Fifo
+        } else
+        {
+            println!("Unable to Find Fifo Present Mode, Falling Back to first present mode ({:#?})", surface_caps.present_modes[0]);
+            surface_caps.present_modes[0]
+        };
+
         let config = SurfaceConfiguration {
             usage: TextureUsages::RENDER_ATTACHMENT,
             format: surface_format,
             width: size.0,
             height: size.1,
-            present_mode: surface_caps.present_modes[0],
+            present_mode: present_mode,
             alpha_mode: surface_caps.alpha_modes[0],
             view_formats: vec![],
         };
