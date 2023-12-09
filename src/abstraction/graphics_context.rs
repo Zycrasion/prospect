@@ -225,6 +225,15 @@ impl GraphicsContext {
         })
     }
 
+    pub fn update_buffer<A: NoUninit>(
+        queue: &Queue,
+        buffer : &Buffer,
+        offset : u64,
+        data: &[A],
+    ) {
+        queue.write_buffer(buffer, offset, bytemuck::cast_slice(data))
+    }
+
     pub fn create_texture(label: &str, bytes: &[u8], device: &Device, queue: &Queue) -> Texture {
         let img = image::load_from_memory(bytes).unwrap();
         let raw = img.to_rgba8();
@@ -300,6 +309,11 @@ impl GraphicsContext {
         BindingType::Sampler(sampler_binding_type)
     }
 
+    pub fn create_uniform_binding_type() -> BindingType
+    {
+        BindingType::Buffer { ty: wgpu::BufferBindingType::Uniform, has_dynamic_offset: false, min_binding_size: None }
+    }
+
     pub fn create_bind_group_layout_entry(binding : u32, shader_stage : ShaderStages, ty : BindingType) -> BindGroupLayoutEntry
     {
         BindGroupLayoutEntry { binding, visibility: shader_stage, ty, count : None }
@@ -340,5 +354,14 @@ impl GraphicsContext {
                 layout: &bind_group_layout,
             }
         )
+    }
+
+    pub fn create_bind_group_entry<'a>(device : &Device, binding : u32, resource : BindingResource<'a>) -> BindGroupEntry<'a>
+    {
+        BindGroupEntry
+        {
+            binding,
+            resource,
+        }
     }
 }

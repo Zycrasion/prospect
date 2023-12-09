@@ -5,13 +5,13 @@ use std::collections::HashMap;
 use wgpu::{Buffer, BufferUsages, RenderPass, Device};
 
 
-use crate::prospect_shape::ProspectShape;
+use crate::{prospect_shape::ProspectShape, prospect_camera::ProspectCamera};
 use crate::prospect_shader_manager::*;
 use super::{vertex::Vertex, graphics_context::GraphicsContext};
 
 pub trait Meshable
 {
-    fn draw<'life>(&'life self, render_pass : &mut RenderPass<'life>, shader_manager : &'life ProspectShaderManager);
+    fn draw<'life>(&'life self, render_pass : &mut RenderPass<'life>, shader_manager : &'life ProspectShaderManager, cam : &'life ProspectCamera);
 }
 
 #[derive(Debug)]
@@ -80,7 +80,7 @@ impl Mesh
 
 impl Meshable for Mesh
 {
-    fn draw<'life>(&'life self, render_pass : &mut RenderPass<'life>, shader_manager : &'life ProspectShaderManager) {
+    fn draw<'life>(&'life self, render_pass : &mut RenderPass<'life>, shader_manager : &'life ProspectShaderManager, cam : &'life ProspectCamera) {
         shader_manager.apply_render_pipeline(&self.render_pipeline, render_pass);
         
         for bind_group in &self.bind_groups
@@ -88,6 +88,7 @@ impl Meshable for Mesh
             shader_manager.apply_bind_group(render_pass, &bind_group.1, *bind_group.0, &[]);
         }
 
+        cam.bind(render_pass, 0);
         render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
         render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);  
         render_pass.draw_indexed(0..self.index_count, 0, 0..1); 

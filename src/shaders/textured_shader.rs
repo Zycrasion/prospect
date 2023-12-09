@@ -42,8 +42,10 @@ impl ProspectShader for TexturedShader {
         }
     }
 
-    fn build_render_pipeline(&self, device : &Device) -> RenderPipeline {
-        HighLevelGraphicsContext::create_render_pipeline("Textured Shader Render Pipeline", device, self, Some(&vec![&self.bind_layout]))
+    fn build_render_pipeline(&self, device: &Device, bind_groups : Vec<&BindGroupLayout>) -> RenderPipeline {
+        let mut bind_groups = bind_groups;
+        bind_groups.push(&self.bind_layout);
+        HighLevelGraphicsContext::create_render_pipeline("Textured Shader Render Pipeline", device, self, Some(&bind_groups))
     }
 }
 

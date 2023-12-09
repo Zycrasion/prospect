@@ -80,7 +80,7 @@ impl PongApp {
 
         let texture = image_shader.register_texture("Car Texture", include_bytes!("../res/car01_Car_Pallete.png"), window);
         let mut pentagon_mesh = Mesh::from_shape(&PENTAGON, window.get_device(), &image_shader_key);
-        pentagon_mesh.set_bind_group(0, &texture);
+        pentagon_mesh.set_bind_group(1, &texture);
         
         let triangle_mesh = Mesh::from_shape(&TRIANGLE, window.get_device(), &main_shader);
 
@@ -108,9 +108,9 @@ impl ProspectApp for PongApp {
             HighLevelGraphicsContext::start_render(clear_colour, &view, &mut command_encoder);
 
         if !self.draw_triangle {
-            self.triangle_mesh.draw(&mut render_pass, window.get_shader_manager());
+            self.triangle_mesh.draw(&mut render_pass, window.get_shader_manager(), &window.camera);
         } else {
-            self.pentagon_mesh.draw(&mut render_pass, window.get_shader_manager());
+            self.pentagon_mesh.draw(&mut render_pass, window.get_shader_manager(), &window.camera);
         }
 
         drop(render_pass);

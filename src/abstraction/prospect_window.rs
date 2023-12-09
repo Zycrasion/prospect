@@ -1,9 +1,10 @@
+use crate::prospect_camera::{ProspectCamera, CamUniform};
 use crate::{prospect_app::ProspectApp, prospect_shader_manager::ProspectBindGroupIndex};
 use crate::prospect_shader_manager::{ProspectShaderManager, ProspectShaderIndex};
 use crate::prospect_app::*;
 use vecto_rs::linear::{Vector, VectorTrait};
 use wgpu::{
-    Device, Queue, Surface, SurfaceConfiguration, BindGroup,
+    Device, Queue, Surface, SurfaceConfiguration, BindGroup, BufferUsages, ShaderStages, BindGroupLayout,
 };
 use winit::{
     dpi::PhysicalSize,
@@ -12,6 +13,7 @@ use winit::{
     window::Window,
 };
 
+use super::graphics_context::GraphicsContext;
 use super::{
     high_level_abstraction::HighLevelGraphicsContext,
     shader::ProspectShader,
@@ -24,7 +26,8 @@ pub struct ProspectWindow {
     device: Device,
     queue: Queue,
     config: SurfaceConfiguration,
-    shader_manager: ProspectShaderManager,
+    pub shader_manager: ProspectShaderManager,
+    pub camera: ProspectCamera,
     pub size: (u32, u32),
 }
 
@@ -39,6 +42,11 @@ impl ProspectWindow {
 
         let shader_manager = ProspectShaderManager::new();
 
+        let mut camera = ProspectCamera::new(&device);
+        camera.eye = Vector::new3(2., 0., 0.);
+        camera.target = Vector::new3(0., 0., 0.);
+        camera.up = Vector::new3(0., 1., 0.);
+
         Self {
             event_loop: Some(event_loop),
             window,
@@ -46,9 +54,20 @@ impl ProspectWindow {
             device,
             queue,
             config,
+            camera,
             size: (width, height),
             shader_manager
         }
+    }
+
+    pub fn bind_groups(&mut self) -> Vec<&BindGroupLayout>
+    {
+        vec![self.cam_bind_layout()]
+    }
+
+    pub fn cam_bind_layout(&mut self) -> &BindGroupLayout
+    {
+        self.camera.get_layout().to_owned()
     }
     
     pub fn get_shader_manager(&self) -> &ProspectShaderManager
@@ -75,7 +94,8 @@ impl ProspectWindow {
 
     pub fn add_shader(&mut self, shader : &impl ProspectShader) -> ProspectShaderIndex
     {
-        self.shader_manager.add_shader(shader, &self.device)
+        let a = vec![self.camera.get_layout().to_owned()];
+        self.shader_manager.add_shader(shader, &self.device, a)
     }
 
     pub fn add_bind_group<S : AsRef<str>>(&mut self, name : S,  bind_group : BindGroup) -> ProspectBindGroupIndex
@@ -126,6 +146,9 @@ impl ProspectWindow {
         event_loop.run(move |event, _, control_flow| match event {
             Event::RedrawRequested(window_id) => {
                 if window_id == self.window.id() {
+                    let queue = &self.queue;
+                    self.camera.process_frame(queue);
+
                     let result = app.draw(&self);
                     match result {
                         Ok(_) => {}

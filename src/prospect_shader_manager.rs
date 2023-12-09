@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
-use wgpu::{RenderPipeline, RenderPass, Device, BindGroup};
+use wgpu::{RenderPipeline, RenderPass, Device, BindGroup, BindGroupLayout};
 
-use crate::abstraction::shader::ProspectShader;
+use crate::abstraction::{shader::ProspectShader, prospect_window::ProspectWindow};
 
 #[derive(Clone, Debug, PartialEq, PartialOrd, Hash, Eq)]
 pub struct ProspectShaderIndex(String);
@@ -23,9 +23,9 @@ impl ProspectShaderManager
         Self { pipelines: HashMap::new(), bind_groups : HashMap::new() }
     }
 
-    pub fn add_shader(&mut self, shader : &impl ProspectShader, device : &Device) -> ProspectShaderIndex
+    pub fn add_shader(&mut self, shader : &impl ProspectShader, device: &Device, bind_groups : Vec<&BindGroupLayout>) -> ProspectShaderIndex
     {
-        let _ = self.pipelines.insert(ProspectShaderIndex(shader.get_name().to_owned()), shader.build_render_pipeline(device));
+        let _ = self.pipelines.insert(ProspectShaderIndex(shader.get_name().to_owned()), shader.build_render_pipeline(device, bind_groups));
 
         ProspectShaderIndex(shader.get_name().to_owned())
     }

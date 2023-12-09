@@ -1,5 +1,5 @@
 use wgpu::{
-    BlendState, ColorTargetState, ColorWrites, Device, FragmentState, ShaderModule, VertexState, RenderPipeline,
+    BlendState, ColorTargetState, ColorWrites, Device, FragmentState, ShaderModule, VertexState, RenderPipeline, BindGroup, BindGroupLayout,
 };
 
 use super::{graphics_context::GraphicsContext, vertex::Vertex, high_level_abstraction::HighLevelGraphicsContext, prospect_window::ProspectWindow};
@@ -10,9 +10,9 @@ pub trait ProspectShader : Sized {
     fn fragment_state(&self) -> FragmentState;
     fn vertex_state(&self) -> VertexState;
 
-    fn build_render_pipeline(&self, device : &Device) -> RenderPipeline
+    fn build_render_pipeline(&self, device : &Device, bind_groups : Vec<&BindGroupLayout>) -> RenderPipeline
     {
-        HighLevelGraphicsContext::create_render_pipeline(self.get_name(), device, self, None)
+        HighLevelGraphicsContext::create_render_pipeline(self.get_name(), device, self, Some(&bind_groups))
     }
 }
 
