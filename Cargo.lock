@@ -1131,8 +1131,8 @@ dependencies = [
 
 [[package]]
 name = "prospect-obj"
-version = "0.3.0"
-source = "git+https://github.com/Zycrasion/prospect-obj#4fe986f7c06883d5a0e9b5cb969cbbd43c2b6093"
+version = "0.3.1"
+source = "git+https://github.com/Zycrasion/prospect-obj#95acf06fdb12bc1d7e2fb68bf3071273fd364ccf"
 dependencies = [
  "vecto-rs",
 ]
