@@ -4,7 +4,7 @@ use crate::prospect_shader_manager::{ProspectShaderManager, ProspectShaderIndex}
 use crate::prospect_app::*;
 use vecto_rs::linear::{Vector, VectorTrait};
 use wgpu::{
-    Device, Queue, Surface, SurfaceConfiguration, BindGroup, BufferUsages, ShaderStages, BindGroupLayout,
+   *
 };
 use winit::{
     dpi::PhysicalSize,
@@ -26,6 +26,7 @@ pub struct ProspectWindow {
     device: Device,
     queue: Queue,
     config: SurfaceConfiguration,
+    depth_texture: (Texture, TextureView, Sampler),
     pub shader_manager: ProspectShaderManager,
     pub size: (u32, u32),
 }
@@ -41,6 +42,8 @@ impl ProspectWindow {
 
         let shader_manager = ProspectShaderManager::new();
 
+        let depth_texture = GraphicsContext::create_depth_texture(&device, &config, "Depth Texture");
+
         Self {
             event_loop: Some(event_loop),
             window,
@@ -49,7 +52,8 @@ impl ProspectWindow {
             queue,
             config,
             size: (width, height),
-            shader_manager
+            shader_manager,
+            depth_texture
         }
     }
 
@@ -63,6 +67,11 @@ impl ProspectWindow {
     //     self.camera.get_layout().to_owned()
     // }
     
+    pub fn get_depth_buffer(&self) -> &TextureView
+    {
+        &self.depth_texture.1
+    }
+
     pub fn get_shader_manager(&self) -> &ProspectShaderManager
     {
         &self.shader_manager

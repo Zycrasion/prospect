@@ -70,7 +70,7 @@ fn main() {
 pub struct PongApp {
     clear_col: (f64, f64, f64),
     triangle_mesh: Mesh,
-    pentagon_mesh: Mesh,
+    car: Mesh,
     draw_triangle: bool,
     frame : f32,
     camera: ProspectCamera,
@@ -97,18 +97,18 @@ impl PongApp {
 
         for vert in car_mesh_verts
         {
-            shape.vertices.push(Vertex { position: [vert.0.x, vert.0.y, vert.0.z], uv: [vert.1.x, vert.1.y] })
+            shape.vertices.push(Vertex { position: [vert.0.x, vert.0.y, vert.0.z], uv: [vert.1.x, 1. - vert.1.y] })
         }
 
-        let mut pentagon_mesh = Mesh::from_shape(&shape, window.get_device(), &image_shader_key);
-        pentagon_mesh.set_bind_group(1, &texture);
+        let mut car = Mesh::from_shape(&shape, window.get_device(), &image_shader_key);
+        car.set_bind_group(1, &texture);
         
         let triangle_mesh = Mesh::from_shape(&TRIANGLE, window.get_device(), &main_shader);
 
         Self {
             clear_col: (0., 0., 0.),
             triangle_mesh,
-            pentagon_mesh,
+            car,
             draw_triangle: true,
             frame: 1.,
             camera,
@@ -134,7 +134,7 @@ impl ProspectApp for PongApp {
 
         let (output, view, mut command_encoder) = HighLevelGraphicsContext::init_view(window);
         let mut render_pass =
-            HighLevelGraphicsContext::start_render(clear_colour, &view, &mut command_encoder);
+            HighLevelGraphicsContext::start_render(clear_colour, &view, window.get_depth_buffer(), &mut command_encoder);
         
         self.cam_controller.process(delta, &mut self.camera);
         self.camera.process_frame(window.get_queue());
@@ -142,7 +142,7 @@ impl ProspectApp for PongApp {
         if !self.draw_triangle {
             self.triangle_mesh.draw(&mut render_pass, window.get_shader_manager(), &self.camera);
         } else {
-            self.pentagon_mesh.draw(&mut render_pass, window.get_shader_manager(), &self.camera);
+            self.car.draw(&mut render_pass, window.get_shader_manager(), &self.camera);
         }
 
         drop(render_pass);

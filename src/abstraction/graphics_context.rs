@@ -1,24 +1,14 @@
 use bytemuck::NoUninit;
 
-use wgpu::{
-    util::{BufferInitDescriptor, DeviceExt},
-    Adapter, Backends, Buffer, Color,
-    CommandEncoder, CommandEncoderDescriptor, Device, DeviceDescriptor, Dx12Compiler, Extent3d,
-    Face, Features, FragmentState, FrontFace, ImageCopyTexture, Instance, InstanceDescriptor,
-    Limits, LoadOp, MultisampleState, Operations, PipelineLayout, PipelineLayoutDescriptor,
-    PolygonMode, PowerPreference, PrimitiveState, PrimitiveTopology, Queue, RenderPass,
-    RenderPassColorAttachment, RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor,
-    RequestDeviceError, ShaderModule, ShaderModuleDescriptor, Surface, SurfaceConfiguration,
-    SurfaceTexture, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages, TextureView,
-    TextureViewDescriptor, VertexState, Origin3d, TextureAspect, ImageDataLayout, Texture, SamplerDescriptor, AddressMode, FilterMode, Sampler, BindGroupEntry, BindGroupLayoutEntry, BindGroupLayout, BindGroupLayoutDescriptor, ShaderStages, BindingType, TextureViewDimension, TextureSampleType, SamplerBindingType, BindingResource, BindGroup, BindGroupDescriptor, PresentMode,
-};
+use env_logger::filter::Filter;
+use wgpu::*;
+
+use wgpu::util::{BufferInitDescriptor, DeviceExt};
 use winit::{
     dpi::{PhysicalSize, Size},
     event_loop::EventLoop,
     window::{Window, WindowBuilder},
 };
-
-
 
 pub struct GraphicsContext;
 
@@ -103,12 +93,13 @@ impl GraphicsContext {
             panic!()
         }
 
-        let present_mode = if surface_caps.present_modes.contains(&PresentMode::Fifo)
-        {
+        let present_mode = if surface_caps.present_modes.contains(&PresentMode::Fifo) {
             PresentMode::Fifo
-        } else
-        {
-            println!("Unable to Find Fifo Present Mode, Falling Back to first present mode ({:#?})", surface_caps.present_modes[0]);
+        } else {
+            println!(
+                "Unable to Find Fifo Present Mode, Falling Back to first present mode ({:#?})",
+                surface_caps.present_modes[0]
+            );
             surface_caps.present_modes[0]
         };
 
@@ -145,6 +136,7 @@ impl GraphicsContext {
         clear_color: (f64, f64, f64, f64),
         label: &str,
         view: &'pass TextureView,
+        depth_view: &'pass TextureView,
         command_encoder: &'pass mut CommandEncoder,
     ) -> RenderPass<'pass> {
         command_encoder.begin_render_pass(&RenderPassDescriptor {
@@ -162,7 +154,11 @@ impl GraphicsContext {
                     store: true,
                 },
             })],
-            depth_stencil_attachment: None,
+            depth_stencil_attachment: Some(RenderPassDepthStencilAttachment {
+                view: depth_view,
+                depth_ops: Some(Operations { load: LoadOp::Clear(1.0), store: true }),
+                stencil_ops: None,
+            }),
         })
     }
 
@@ -173,7 +169,11 @@ impl GraphicsContext {
         })
     }
 
-    pub fn create_pipeline_layout(name: &str, device: &Device, bind_group_layouts : &Vec<&BindGroupLayout>) -> PipelineLayout {
+    pub fn create_pipeline_layout(
+        name: &str,
+        device: &Device,
+        bind_group_layouts: &Vec<&BindGroupLayout>,
+    ) -> PipelineLayout {
         device.create_pipeline_layout(&PipelineLayoutDescriptor {
             label: Some(name),
             bind_group_layouts: &bind_group_layouts,
@@ -202,7 +202,13 @@ impl GraphicsContext {
                 unclipped_depth: false,
                 conservative: false,
             },
-            depth_stencil: None,
+            depth_stencil: Some(DepthStencilState {
+                format: GraphicsContext::DEPTH_FORMAT,
+                depth_write_enabled: true,
+                depth_compare: CompareFunction::Less,
+                stencil: StencilState::default(),
+                bias: DepthBiasState::default(),
+            }),
             multisample: MultisampleState {
                 count: 1,
                 mask: !0,
@@ -225,12 +231,7 @@ impl GraphicsContext {
         })
     }
 
-    pub fn update_buffer<A: NoUninit>(
-        queue: &Queue,
-        buffer : &Buffer,
-        offset : u64,
-        data: &[A],
-    ) {
+    pub fn update_buffer<A: NoUninit>(queue: &Queue, buffer: &Buffer, offset: u64, data: &[A]) {
         queue.write_buffer(buffer, offset, bytemuck::cast_slice(data))
     }
 
@@ -264,8 +265,7 @@ impl GraphicsContext {
                 aspect: TextureAspect::All,
             },
             &raw,
-            ImageDataLayout
-            {
+            ImageDataLayout {
                 offset: 0,
                 bytes_per_row: Some(4 * dimensions.0),
                 rows_per_image: Some(dimensions.1),
@@ -276,92 +276,174 @@ impl GraphicsContext {
         texture
     }
 
-    pub fn create_texture_view(texture : &Texture) -> TextureView
-    {
+    pub fn create_texture_view(texture: &Texture) -> TextureView {
         texture.create_view(&TextureViewDescriptor::default())
     }
 
-    pub fn create_sampler(label: &str, device: &Device, mag_filter : Option<FilterMode>, min_filter : Option<FilterMode>) -> Sampler
-    {
-        let sampler = device.create_sampler(
-            &SamplerDescriptor
-            {
-                label : Some(label),
-                address_mode_u : AddressMode::ClampToEdge,
-                address_mode_v : AddressMode::ClampToEdge,
-                address_mode_w : AddressMode::ClampToEdge,
-                mag_filter : mag_filter.unwrap_or(FilterMode::Linear),
-                min_filter: min_filter.unwrap_or(FilterMode::Nearest),
-                mipmap_filter : FilterMode::Nearest,
-                ..Default::default()
-            }
-        );
+    pub fn create_sampler(
+        label: &str,
+        device: &Device,
+        mag_filter: Option<FilterMode>,
+        min_filter: Option<FilterMode>,
+    ) -> Sampler {
+        let sampler = device.create_sampler(&SamplerDescriptor {
+            label: Some(label),
+            address_mode_u: AddressMode::ClampToEdge,
+            address_mode_v: AddressMode::ClampToEdge,
+            address_mode_w: AddressMode::ClampToEdge,
+            mag_filter: mag_filter.unwrap_or(FilterMode::Linear),
+            min_filter: min_filter.unwrap_or(FilterMode::Nearest),
+            mipmap_filter: FilterMode::Nearest,
+            ..Default::default()
+        });
         sampler
     }
 
-    pub fn create_texture_binding_type(multisampled : bool, view_dimension : TextureViewDimension, sample_type : TextureSampleType) -> BindingType
-    {
-        BindingType::Texture { sample_type, view_dimension, multisampled }
+    pub fn create_sampler_advanced(
+        label: &str,
+        device: &Device,
+        mag_filter: Option<FilterMode>,
+        min_filter: Option<FilterMode>,
+        mipmap_filter: Option<FilterMode>,
+        compare: Option<CompareFunction>,
+        lod_min_clamp: Option<f32>,
+        lod_max_clamp: Option<f32>,
+    ) -> Sampler {
+        let sampler = device.create_sampler(&SamplerDescriptor {
+            label: Some(label),
+            address_mode_u: AddressMode::ClampToEdge,
+            address_mode_v: AddressMode::ClampToEdge,
+            address_mode_w: AddressMode::ClampToEdge,
+            mag_filter: mag_filter.unwrap_or(FilterMode::Linear),
+            min_filter: min_filter.unwrap_or(FilterMode::Nearest),
+            mipmap_filter: mipmap_filter.unwrap_or(FilterMode::Nearest),
+            compare,
+            lod_min_clamp: lod_min_clamp.unwrap_or(0.),
+            lod_max_clamp: lod_max_clamp.unwrap_or(100.),
+            ..Default::default()
+        });
+        sampler
     }
 
-    pub fn create_sample_binding_type(sampler_binding_type : SamplerBindingType) -> BindingType
-    {
+    pub fn create_texture_binding_type(
+        multisampled: bool,
+        view_dimension: TextureViewDimension,
+        sample_type: TextureSampleType,
+    ) -> BindingType {
+        BindingType::Texture {
+            sample_type,
+            view_dimension,
+            multisampled,
+        }
+    }
+
+    pub fn create_sample_binding_type(sampler_binding_type: SamplerBindingType) -> BindingType {
         BindingType::Sampler(sampler_binding_type)
     }
 
-    pub fn create_uniform_binding_type() -> BindingType
-    {
-        BindingType::Buffer { ty: wgpu::BufferBindingType::Uniform, has_dynamic_offset: false, min_binding_size: None }
+    pub fn create_uniform_binding_type() -> BindingType {
+        BindingType::Buffer {
+            ty: wgpu::BufferBindingType::Uniform,
+            has_dynamic_offset: false,
+            min_binding_size: None,
+        }
     }
 
-    pub fn create_bind_group_layout_entry(binding : u32, shader_stage : ShaderStages, ty : BindingType) -> BindGroupLayoutEntry
-    {
-        BindGroupLayoutEntry { binding, visibility: shader_stage, ty, count : None }
+    pub fn create_bind_group_layout_entry(
+        binding: u32,
+        shader_stage: ShaderStages,
+        ty: BindingType,
+    ) -> BindGroupLayoutEntry {
+        BindGroupLayoutEntry {
+            binding,
+            visibility: shader_stage,
+            ty,
+            count: None,
+        }
     }
 
-    pub fn create_bind_group_layout(device : &Device, label: &str, entries : &Vec<BindGroupLayoutEntry>) -> BindGroupLayout
-    {
-        device.create_bind_group_layout(
-            &BindGroupLayoutDescriptor
-            {
-                label: Some(label),
-                entries: &entries,
-            }
-        )
+    pub fn create_bind_group_layout(
+        device: &Device,
+        label: &str,
+        entries: &Vec<BindGroupLayoutEntry>,
+    ) -> BindGroupLayout {
+        device.create_bind_group_layout(&BindGroupLayoutDescriptor {
+            label: Some(label),
+            entries: &entries,
+        })
     }
 
-    pub fn create_texture_view_resource(binding : u32, view : &TextureView) -> BindGroupEntry
-    {
-        BindGroupEntry
-        {
+    pub fn create_texture_view_resource(binding: u32, view: &TextureView) -> BindGroupEntry {
+        BindGroupEntry {
             binding,
             resource: BindingResource::TextureView(view),
         }
     }
 
-    pub fn create_sampler_resource(binding : u32, sampler : &Sampler) -> BindGroupEntry
-    {
-        BindGroupEntry { binding, resource: BindingResource::Sampler(sampler) }
-    }
-
-    pub fn create_bind_group(device : &Device, label: &str, bind_group_layout : &BindGroupLayout, entries : &Vec<BindGroupEntry>) -> BindGroup
-    {
-        device.create_bind_group(
-            &BindGroupDescriptor
-            {
-                label: Some(label),
-                entries: &entries,
-                layout: &bind_group_layout,
-            }
-        )
-    }
-
-    pub fn create_bind_group_entry<'a>(device : &Device, binding : u32, resource : BindingResource<'a>) -> BindGroupEntry<'a>
-    {
-        BindGroupEntry
-        {
+    pub fn create_sampler_resource(binding: u32, sampler: &Sampler) -> BindGroupEntry {
+        BindGroupEntry {
             binding,
-            resource,
+            resource: BindingResource::Sampler(sampler),
         }
+    }
+
+    pub fn create_bind_group(
+        device: &Device,
+        label: &str,
+        bind_group_layout: &BindGroupLayout,
+        entries: &Vec<BindGroupEntry>,
+    ) -> BindGroup {
+        device.create_bind_group(&BindGroupDescriptor {
+            label: Some(label),
+            entries: &entries,
+            layout: &bind_group_layout,
+        })
+    }
+
+    pub fn create_bind_group_entry<'a>(
+        binding: u32,
+        resource: BindingResource<'a>,
+    ) -> BindGroupEntry<'a> {
+        BindGroupEntry { binding, resource }
+    }
+
+    pub const DEPTH_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Depth32Float;
+
+    pub fn create_depth_texture(
+        device: &Device,
+        config: &SurfaceConfiguration,
+        label: &str,
+    ) -> (Texture, TextureView, Sampler) {
+        let size = Extent3d {
+            width: config.width,
+            height: config.height,
+            depth_or_array_layers: 1,
+        };
+
+        let desc = TextureDescriptor {
+            label: Some(label),
+            size,
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: TextureDimension::D2,
+            format: Self::DEPTH_FORMAT,
+            usage: TextureUsages::RENDER_ATTACHMENT | TextureUsages::TEXTURE_BINDING,
+            view_formats: &[],
+        };
+        let texture = device.create_texture(&desc);
+
+        let view = GraphicsContext::create_texture_view(&texture);
+        let sampler = GraphicsContext::create_sampler_advanced(
+            label,
+            device,
+            Some(FilterMode::Linear),
+            Some(FilterMode::Linear),
+            Some(FilterMode::Nearest),
+            Some(CompareFunction::LessEqual),
+            None,
+            None,
+        );
+
+        (texture, view, sampler)
     }
 }

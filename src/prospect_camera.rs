@@ -95,7 +95,7 @@ impl ProspectCamera {
         let cam_bind_group_layout_entry = GraphicsContext::create_bind_group_layout_entry(0, ShaderStages::VERTEX, GraphicsContext::create_uniform_binding_type());
         let cam_bind_group_layout = GraphicsContext::create_bind_group_layout(&device, "Camera Bind Group Layout", &vec![cam_bind_group_layout_entry]);
 
-        let cam_bind_group_entry = GraphicsContext::create_bind_group_entry(&device, 0, buffer.as_entire_binding());
+        let cam_bind_group_entry = GraphicsContext::create_bind_group_entry(0, buffer.as_entire_binding());
         let cam_bind_group = GraphicsContext::create_bind_group(&device, "Camera Bind Group", &cam_bind_group_layout, &vec![cam_bind_group_entry]);
         (cam_bind_group, cam_bind_group_layout)
     }

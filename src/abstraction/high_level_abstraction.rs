@@ -57,12 +57,14 @@ impl HighLevelGraphicsContext {
     pub fn start_render<'pass>(
         clear: (f64, f64, f64),
         view: &'pass TextureView,
+        depth_view: &'pass TextureView,
         command_encoder: &'pass mut CommandEncoder,
     ) -> RenderPass<'pass> {
         let render_pass = GraphicsContext::begin_render_pass_barebones(
             (clear.0, clear.1, clear.2, 1.0),
             "Render Pass",
             view,
+            depth_view,
             command_encoder,
         );
         render_pass
