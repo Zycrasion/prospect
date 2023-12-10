@@ -1131,8 +1131,8 @@ dependencies = [
 
 [[package]]
 name = "prospect-obj"
-version = "0.1.0"
-source = "git+https://github.com/Zycrasion/prospect-obj#9810b1a0e38e8b7242509e4330d01d563376e4b7"
+version = "0.3.0"
+source = "git+https://github.com/Zycrasion/prospect-obj#4fe986f7c06883d5a0e9b5cb969cbbd43c2b6093"
 dependencies = [
  "vecto-rs",
 ]
@@ -1439,8 +1439,8 @@ checksum = "f1bddf1187be692e79c5ffeab891132dfb0f236ed36a43c7ed39f1165ee20191"
 
 [[package]]
 name = "vecto-rs"
-version = "1.1.9"
-source = "git+https://github.com/Zycrasion/vecto-rs#460401cd66f7b66159636db2b1054263aa1f0d27"
+version = "1.2.1"
+source = "git+https://github.com/Zycrasion/vecto-rs#4eb6116c6e39842de13f3b29fd8382ff8fb31279"
 
 [[package]]
 name = "version_check"
