@@ -56,7 +56,7 @@ impl ProspectCamera {
 
         ProspectCamera {
             eye: Vector::new3(0., 0., 0.),
-            fov: 40.,
+            fov: 90.,
             znear: 0.1,
             zfar: 100.,
             uniform : CamUniform::new(),
