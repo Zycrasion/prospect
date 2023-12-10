@@ -14,7 +14,7 @@ use prospect::{
 use prospect_obj::parse_obj;
 use vecto_rs::linear::{Vector, VectorTrait};
 use wgpu::SurfaceError;
-use winit::event::{ElementState, VirtualKeyCode};
+use winit::{event::{ElementState, VirtualKeyCode, MouseButton}, window::CursorGrabMode};
 
 const PENTAGON: ProspectShape<&[Vertex], &[u16]> = ProspectShape {
     vertices: &[
@@ -105,6 +105,8 @@ impl PongApp {
         
         let triangle_mesh = Mesh::from_shape(&TRIANGLE, window.get_device(), &main_shader);
 
+        window.lock_cursor(CursorGrabMode::Confined).unwrap();
+
         Self {
             clear_col: (0., 0., 0.),
             triangle_mesh,
@@ -119,9 +121,9 @@ impl PongApp {
 }
 
 impl ProspectApp for PongApp {
-    fn setup(&mut self) {}
+    fn setup(&mut self, window: &mut ProspectWindow) {}
 
-    fn draw(&mut self, window: &ProspectWindow) -> Result<(), SurfaceError> {
+    fn draw(&mut self, window: &mut ProspectWindow) -> Result<(), SurfaceError> {
         let clear_colour = (
             self.clear_col.0 / window.size.0 as f64,
             self.clear_col.1 / window.size.1 as f64,
@@ -152,11 +154,21 @@ impl ProspectApp for PongApp {
         Ok(())
     }
 
-    fn process(&mut self, event: ProspectEvent) -> ProcessResponse {
+    fn process(&mut self, event: ProspectEvent, window: &mut ProspectWindow) -> ProcessResponse {
         match event {
+            ProspectEvent::Focused(true) | ProspectEvent::CursorClicked(ElementState::Pressed, MouseButton::Left) =>
+            {
+                window.lock_cursor(CursorGrabMode::Confined).unwrap();
+
+                ProcessResponse::DontProcess
+            }
             ProspectEvent::KeyboardInput(key, ElementState::Pressed) => {
                 if key == Some(VirtualKeyCode::Tab) {
                     self.draw_triangle = !self.draw_triangle;
+                }
+
+                if key == Some(VirtualKeyCode::Q) {
+                    window.lock_cursor(CursorGrabMode::None).unwrap();
                 }
                 
                 if key.is_some()
@@ -183,6 +195,7 @@ impl ProspectApp for PongApp {
                 self.clear_col.1 = cursor_pos.y as f64;
                 ProcessResponse::DontProcess
             }
+            _ => {ProcessResponse::ProspectProcess}
         }
     }
 }

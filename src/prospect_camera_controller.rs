@@ -1,13 +1,15 @@
 use std::collections::{HashMap, HashSet};
 
 use vecto_rs::{linear::{Vector, VectorTrait, Mat4}, trig::to_radians};
-use winit::event::VirtualKeyCode;
+use winit::event::{VirtualKeyCode, ElementState};
 
 use crate::prospect_camera::ProspectCamera;
 
 pub struct CameraController
 {
     keys_down : HashSet<VirtualKeyCode>,
+    mouse_down : bool,
+    mouse_down_pos : Vector,
     pub units_per_second : f32
 }
 
@@ -18,6 +20,8 @@ impl CameraController
         Self
         {
             keys_down : HashSet::new(),
+            mouse_down : false,
+            mouse_down_pos : Vector::default(),
             units_per_second : 3.
         }
     }
@@ -70,6 +74,11 @@ impl CameraController
         let z = -move_vector.x * camera.rotation.y.sin() + move_vector.z * camera.rotation.y.cos();
 
         camera.eye += Vector::new3(x, move_vector.y, z) * delta;
+    }
+
+    pub fn mouse_event(&mut self, state : ElementState)
+    {
+        self.mouse_down =  state == ElementState::Pressed
     }
 
     pub fn key_pressed(&mut self, key : VirtualKeyCode)

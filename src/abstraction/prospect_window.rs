@@ -6,6 +6,8 @@ use vecto_rs::linear::{Vector, VectorTrait};
 use wgpu::{
    *
 };
+use winit::error::ExternalError;
+use winit::window::CursorGrabMode;
 use winit::{
     dpi::PhysicalSize,
     event::{Event, VirtualKeyCode, WindowEvent, ElementState},
@@ -105,12 +107,17 @@ impl ProspectWindow {
         self.shader_manager.add_bind_group(name, bind_group)
     }
 
+    pub fn lock_cursor(&mut self,lock_mode : CursorGrabMode) -> Result<(), ExternalError>
+    {
+        self.window.set_cursor_grab(lock_mode)
+    }
+
     fn process_input(
-        &self,
+        &mut self,
         ev: ProspectEvent,
         app: &mut Box<dyn ProspectApp>,
     ) -> Option<ControlFlow> {
-        let response = app.process(ev);
+        let response = app.process(ev, self);
 
         match response {
             ProcessResponse::CloseApp => Some(ControlFlow::Exit),
@@ -146,12 +153,13 @@ impl ProspectWindow {
     pub fn run_with_app(mut self, mut app: Box<dyn ProspectApp>) {
         let event_loop = self.event_loop.take();
         let event_loop = event_loop.unwrap();
+        app.setup(&mut self);
 
         event_loop.run(move |event, _, control_flow| match event {
             Event::RedrawRequested(window_id) => {
                 if window_id == self.window.id() {
 
-                    let result = app.draw(&self);
+                    let result = app.draw(&mut self);
                     match result {
                         Ok(_) => {}
                         Err(wgpu::SurfaceError::OutOfMemory) => *control_flow = ControlFlow::Exit,
@@ -173,6 +181,23 @@ impl ProspectWindow {
                 WindowEvent::KeyboardInput { input, .. } => {
                     if let Some(flow) = self.process_input(
                         ProspectEvent::KeyboardInput(input.virtual_keycode, input.state),
+                        &mut app,
+                    ) {
+                        *control_flow = flow;
+                    }
+                }
+                WindowEvent::Focused(focused) => {
+                    if let Some(flow) = self.process_input(
+                        ProspectEvent::Focused(*focused),
+                        &mut app,
+                    ) {
+                        *control_flow = flow;
+                    }
+                }
+                WindowEvent::MouseInput { device_id, state, button, modifiers } =>
+                {
+                    if let Some(flow) = self.process_input(
+                        ProspectEvent::CursorClicked(*state, *button),
                         &mut app,
                     ) {
                         *control_flow = flow;

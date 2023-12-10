@@ -1,5 +1,5 @@
 use vecto_rs::linear::Vector;
-use winit::event::{VirtualKeyCode, ElementState};
+use winit::event::{VirtualKeyCode, ElementState, MouseButton};
 
 use crate::{abstraction::prospect_window::ProspectWindow, prospect_camera::ProspectCamera};
 
@@ -7,7 +7,9 @@ use crate::{abstraction::prospect_window::ProspectWindow, prospect_camera::Prosp
 pub enum ProspectEvent
 {
     KeyboardInput(Option<VirtualKeyCode>, ElementState),
-    CursorMoveEvent(Vector)
+    CursorMoveEvent(Vector),
+    Focused(bool),
+    CursorClicked(ElementState, MouseButton)
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -20,11 +22,11 @@ pub enum ProcessResponse
 
 pub trait ProspectApp
 {
-    fn setup(&mut self);
+    fn setup(&mut self, window : &mut ProspectWindow);
     
-    fn draw(&mut self, window : &ProspectWindow) -> Result<(), wgpu::SurfaceError>;
+    fn draw(&mut self, window : &mut ProspectWindow) -> Result<(), wgpu::SurfaceError>;
 
-    fn process(&mut self, _event : ProspectEvent) -> ProcessResponse
+    fn process(&mut self, _event : ProspectEvent, window : &mut ProspectWindow) -> ProcessResponse
     {
         ProcessResponse::ProspectProcess
     }
