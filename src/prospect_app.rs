@@ -1,7 +1,7 @@
 use vecto_rs::linear::Vector;
 use winit::event::{VirtualKeyCode, ElementState};
 
-use crate::abstraction::prospect_window::ProspectWindow;
+use crate::{abstraction::prospect_window::ProspectWindow, prospect_camera::ProspectCamera};
 
 #[derive(Clone, Copy, PartialEq)]
 pub enum ProspectEvent

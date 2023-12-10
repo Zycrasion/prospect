@@ -27,7 +27,6 @@ pub struct ProspectWindow {
     queue: Queue,
     config: SurfaceConfiguration,
     pub shader_manager: ProspectShaderManager,
-    pub camera: ProspectCamera,
     pub size: (u32, u32),
 }
 
@@ -42,11 +41,6 @@ impl ProspectWindow {
 
         let shader_manager = ProspectShaderManager::new();
 
-        let mut camera = ProspectCamera::new(&device);
-        camera.eye = Vector::new3(2., 0., 0.);
-        camera.target = Vector::new3(0., 0., 0.);
-        camera.up = Vector::new3(0., 1., 0.);
-
         Self {
             event_loop: Some(event_loop),
             window,
@@ -54,21 +48,20 @@ impl ProspectWindow {
             device,
             queue,
             config,
-            camera,
             size: (width, height),
             shader_manager
         }
     }
 
-    pub fn bind_groups(&mut self) -> Vec<&BindGroupLayout>
-    {
-        vec![self.cam_bind_layout()]
-    }
+    // pub fn bind_groups(&mut self) -> Vec<&BindGroupLayout>
+    // {
+    //     vec![self.cam_bind_layout()]
+    // }
 
-    pub fn cam_bind_layout(&mut self) -> &BindGroupLayout
-    {
-        self.camera.get_layout().to_owned()
-    }
+    // pub fn cam_bind_layout(&mut self) -> &BindGroupLayout
+    // {
+    //     self.camera.get_layout().to_owned()
+    // }
     
     pub fn get_shader_manager(&self) -> &ProspectShaderManager
     {
@@ -92,9 +85,9 @@ impl ProspectWindow {
         &self.queue
     }
 
-    pub fn add_shader(&mut self, shader : &impl ProspectShader) -> ProspectShaderIndex
+    pub fn add_shader(&mut self, shader : &impl ProspectShader, camera : &ProspectCamera) -> ProspectShaderIndex
     {
-        let a = vec![self.camera.get_layout().to_owned()];
+        let a = vec![camera.get_layout()];
         self.shader_manager.add_shader(shader, &self.device, a)
     }
 
@@ -146,8 +139,6 @@ impl ProspectWindow {
         event_loop.run(move |event, _, control_flow| match event {
             Event::RedrawRequested(window_id) => {
                 if window_id == self.window.id() {
-                    let queue = &self.queue;
-                    self.camera.process_frame(queue);
 
                     let result = app.draw(&self);
                     match result {

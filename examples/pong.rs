@@ -1,3 +1,5 @@
+use std::time::{SystemTime, Duration};
+
 use prospect::{
     abstraction::{
         high_level_abstraction::HighLevelGraphicsContext,
@@ -7,8 +9,10 @@ use prospect::{
         vertex::Vertex, graphics_context::GraphicsContext,
     },
     prospect_app::{ProcessResponse, ProspectApp, ProspectEvent},
-    prospect_shape::ProspectShape, shaders::textured_shader::TexturedShader,
+    prospect_shape::ProspectShape, shaders::textured_shader::TexturedShader, prospect_camera::ProspectCamera, prospect_camera_controller::CameraController,
 };
+use prospect_obj::parse_obj;
+use vecto_rs::linear::{Vector, VectorTrait};
 use wgpu::SurfaceError;
 use winit::event::{ElementState, VirtualKeyCode};
 
@@ -67,19 +71,36 @@ pub struct PongApp {
     clear_col: (f64, f64, f64),
     triangle_mesh: Mesh,
     pentagon_mesh: Mesh,
-    draw_triangle: bool
+    draw_triangle: bool,
+    frame : f32,
+    camera: ProspectCamera,
+    cam_controller : CameraController,
+    last_frame : SystemTime
 }
 
 
 impl PongApp {
     fn new(window: &mut ProspectWindow) -> Self {
+        let camera = ProspectCamera::new(window.get_device());
+
+
         let image_shader = TexturedShader::new(&window);
-        let image_shader_key = window.add_shader(&image_shader);
+        let image_shader_key = window.add_shader(&image_shader, &camera);
         let main_shader = BasicShader::new(&window);
-        let main_shader = window.add_shader(&main_shader);
+        let main_shader = window.add_shader(&main_shader, &camera);
 
         let texture = image_shader.register_texture("Car Texture", include_bytes!("../res/car01_Car_Pallete.png"), window);
-        let mut pentagon_mesh = Mesh::from_shape(&PENTAGON, window.get_device(), &image_shader_key);
+
+        let mut car_mesh = parse_obj(include_str!("../res/car01.obj"));
+        let car_mesh_verts = car_mesh.extract_vertices_and_uv();
+        let mut shape : ProspectShape<Vec<Vertex>, Vec<u16>> = ProspectShape { vertices: Vec::new(), indices: None };
+
+        for vert in car_mesh_verts
+        {
+            shape.vertices.push(Vertex { position: [vert.0.x, vert.0.y, vert.0.z], uv: [vert.1.x, vert.1.y] })
+        }
+
+        let mut pentagon_mesh = Mesh::from_shape(&shape, window.get_device(), &image_shader_key);
         pentagon_mesh.set_bind_group(1, &texture);
         
         let triangle_mesh = Mesh::from_shape(&TRIANGLE, window.get_device(), &main_shader);
@@ -88,7 +109,11 @@ impl PongApp {
             clear_col: (0., 0., 0.),
             triangle_mesh,
             pentagon_mesh,
-            draw_triangle: true
+            draw_triangle: true,
+            frame: 1.,
+            camera,
+            last_frame : SystemTime::now(),
+            cam_controller : CameraController::new()
         }
     }
 }
@@ -103,18 +128,26 @@ impl ProspectApp for PongApp {
             0.5,
         );
 
+        let this_time = SystemTime::now();
+        let delta = this_time.duration_since(self.last_frame).unwrap_or(Duration::from_secs_f32(1. / 60.)).as_secs_f32();
+        self.last_frame = this_time;
+
         let (output, view, mut command_encoder) = HighLevelGraphicsContext::init_view(window);
         let mut render_pass =
             HighLevelGraphicsContext::start_render(clear_colour, &view, &mut command_encoder);
+        
+        self.cam_controller.process(delta, &mut self.camera);
+        self.camera.process_frame(window.get_queue());
 
         if !self.draw_triangle {
-            self.triangle_mesh.draw(&mut render_pass, window.get_shader_manager(), &window.camera);
+            self.triangle_mesh.draw(&mut render_pass, window.get_shader_manager(), &self.camera);
         } else {
-            self.pentagon_mesh.draw(&mut render_pass, window.get_shader_manager(), &window.camera);
+            self.pentagon_mesh.draw(&mut render_pass, window.get_shader_manager(), &self.camera);
         }
 
         drop(render_pass);
 
+        self.frame += 1. / 60.;
         HighLevelGraphicsContext::finish_render(window, command_encoder, output);
         Ok(())
     }
@@ -125,6 +158,11 @@ impl ProspectApp for PongApp {
                 if key == Some(VirtualKeyCode::Space) {
                     self.draw_triangle = !self.draw_triangle;
                 }
+                
+                if key.is_some()
+                {
+                    self.cam_controller.key_pressed(key.expect("Unexpected None for CameraController"));
+                }
 
                 if key == Some(VirtualKeyCode::Escape) {
                     ProcessResponse::CloseApp
@@ -132,7 +170,12 @@ impl ProspectApp for PongApp {
                     ProcessResponse::DontProcess
                 }
             }
-            ProspectEvent::KeyboardInput(_key, ElementState::Released) => {
+            ProspectEvent::KeyboardInput(key, ElementState::Released) => {
+                if key.is_some()
+                {
+                    self.cam_controller.key_released(key.expect("Unexpected None for CameraController"));
+                }
+
                 ProcessResponse::DontProcess
             }
             ProspectEvent::CursorMoveEvent(cursor_pos) => {

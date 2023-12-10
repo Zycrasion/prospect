@@ -38,8 +38,6 @@ impl CamUniform {
 
 pub struct ProspectCamera {
     pub eye: Vector,
-    pub target: Vector,
-    pub up: Vector,
     pub fov: f32,
     pub znear: f32,
     pub zfar: f32,
@@ -57,8 +55,6 @@ impl ProspectCamera {
 
         ProspectCamera {
             eye: Vector::new3(0., 0., 0.),
-            target: Vector::new3(0., 0., 1.),
-            up: Vector::new3(0., 1., 0.),
             fov: 90.,
             znear: 0.1,
             zfar: 100.,
@@ -72,7 +68,7 @@ impl ProspectCamera {
     pub fn process_frame(&mut self, queue : &Queue)
     {
         let projection = &self.generate_projection_matrix();
-        self.uniform.update_proj(projection);
+        self.uniform.update_proj(&projection.get_column_major());
         GraphicsContext::update_buffer(queue, &self.buffer, 0, &[self.uniform]);
     }
 
@@ -88,10 +84,10 @@ impl ProspectCamera {
 
     pub fn generate_projection_matrix(&self) -> Mat4
     {
-        let view = Mat4::look_at_rh(&self.eye, &self.target, &self.up);
-        let mut projection = Mat4::new();
-        projection.set_perspective_matrix(self.fov, self.znear, self.zfar);
-        OPENGL_TO_WGPU_MATRIX * projection * view
+        let view = Mat4::new_transform(self.eye);
+        let projection = Mat4::new_perspective_matrix(480., 480., self.fov, self.znear, self.zfar);
+        let cam_matrix = OPENGL_TO_WGPU_MATRIX * projection * view;
+        cam_matrix
     }
 
     fn create_uniform(buffer : &Buffer, device : &Device) -> (BindGroup, BindGroupLayout)
