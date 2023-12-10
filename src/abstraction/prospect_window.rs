@@ -135,6 +135,8 @@ impl ProspectWindow {
         self.config.height = size.height;
         self.surface.configure(&self.device, &self.config);
         self.size = (size.width, size.height);
+
+        self.depth_texture = GraphicsContext::create_depth_texture(&self.device, &self.config, "Depth Texture");
     }
 
     fn reconfigure(&mut self) {

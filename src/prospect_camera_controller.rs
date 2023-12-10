@@ -17,7 +17,7 @@ impl CameraController
         Self
         {
             keys_down : HashSet::new(),
-            units_per_second : 1.
+            units_per_second : 3.
         }
     }
 
@@ -41,6 +41,16 @@ impl CameraController
         if self.keys_down.contains(&VirtualKeyCode::D)
         {
             camera.eye.x -= self.units_per_second * delta;
+        }
+
+        if self.keys_down.contains(&VirtualKeyCode::E)
+        {
+            camera.eye.y += self.units_per_second * delta;
+        }
+        
+        if self.keys_down.contains(&VirtualKeyCode::Q)
+        {
+            camera.eye.y -= self.units_per_second * delta;
         }
     }
 

@@ -65,9 +65,9 @@ impl ProspectCamera {
         }
     }
 
-    pub fn process_frame(&mut self, queue : &Queue)
+    pub fn process_frame(&mut self, width : f32, height : f32, queue : &Queue)
     {
-        let projection = &self.generate_projection_matrix();
+        let projection = &self.generate_projection_matrix(width, height);
         self.uniform.update_proj(&projection.get_column_major());
         GraphicsContext::update_buffer(queue, &self.buffer, 0, &[self.uniform]);
     }
@@ -82,10 +82,10 @@ impl ProspectCamera {
         render_pass.set_bind_group(binding, &self.bind_group, &[]);
     }
 
-    pub fn generate_projection_matrix(&self) -> Mat4
+    pub fn generate_projection_matrix(&self, width : f32, height : f32) -> Mat4
     {
         let view = Mat4::new_transform(self.eye);
-        let projection = Mat4::new_perspective_matrix(480., 480., self.fov, self.znear, self.zfar);
+        let projection = Mat4::new_perspective_matrix(width, height, self.fov, self.znear, self.zfar);
         let cam_matrix = OPENGL_TO_WGPU_MATRIX * projection * view;
         cam_matrix
     }

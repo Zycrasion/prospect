@@ -137,7 +137,7 @@ impl ProspectApp for PongApp {
             HighLevelGraphicsContext::start_render(clear_colour, &view, window.get_depth_buffer(), &mut command_encoder);
         
         self.cam_controller.process(delta, &mut self.camera);
-        self.camera.process_frame(window.get_queue());
+        self.camera.process_frame(window.size.0 as f32, window.size.1 as f32, window.get_queue());
 
         if !self.draw_triangle {
             self.triangle_mesh.draw(&mut render_pass, window.get_shader_manager(), &self.camera);
