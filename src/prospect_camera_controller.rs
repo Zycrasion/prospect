@@ -74,26 +74,19 @@ impl CameraController
             camera.rotation.y -= self.units_per_second * delta;
         }
 
-        camera.rotation.y += to_radians(self.drag_amount.x);
+        camera.rotation.y += to_radians(self.drag_amount.x) * 2.;
         camera.rotation.x += to_radians(self.drag_amount.y);
         camera.rotation.x = camera.rotation.x.clamp(to_radians(-45.), to_radians(45.));
         self.drag_amount = Vector::default();
 
-        let mut new_move_vector = Vector::default();
-        
-        new_move_vector.x = move_vector.x;
-        new_move_vector.y = move_vector.y * camera.rotation.x.cos() - move_vector.z * camera.rotation.x.sin();
-        new_move_vector.z = move_vector.y * camera.rotation.x.sin() + move_vector.z * camera.rotation.x.cos();
-        
-        let x = new_move_vector.x * camera.rotation.y.cos() + new_move_vector.z * camera.rotation.y.sin();
-        let y = new_move_vector.y;
-        let z = -new_move_vector.x * camera.rotation.y.sin() + new_move_vector.z * camera.rotation.y.cos();
+        move_vector.rotate_x(camera.rotation.x);
+        move_vector.rotate_y(camera.rotation.y);
         
         if self.mouse_down
         {
             let _ = window.get_window().set_cursor_position(LogicalPosition::new(self.mouse_down_pos.x, self.mouse_down_pos.y));                
         }
-        camera.eye += Vector::new3(x, y, z) * delta;
+        camera.eye += move_vector * delta;
     }
 
     pub fn mouse_click_event(&mut self, state : ElementState, window : &mut ProspectWindow)
