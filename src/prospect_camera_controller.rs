@@ -1,7 +1,7 @@
 use std::{collections::{HashMap, HashSet}, env::consts::FAMILY};
 
 use vecto_rs::{linear::{Vector, VectorTrait, Mat4}, trig::to_radians};
-use winit::{event::{VirtualKeyCode, ElementState}, dpi::{PhysicalPosition, LogicalPosition}};
+use winit::{event::{VirtualKeyCode, ElementState}, dpi::{PhysicalPosition, LogicalPosition}, window};
 
 use crate::{prospect_camera::ProspectCamera, abstraction::prospect_window::ProspectWindow};
 
@@ -74,8 +74,8 @@ impl CameraController
             camera.rotation.y -= self.units_per_second * delta;
         }
 
-        camera.rotation.y += self.drag_amount.x as f32 * delta / 10.;
-        camera.rotation.x += self.drag_amount.y as f32 * delta / 10.;
+        camera.rotation.y += to_radians(self.drag_amount.x);
+        camera.rotation.x += to_radians(self.drag_amount.y);
         camera.rotation.x = camera.rotation.x.clamp(to_radians(-45.), to_radians(45.));
         self.drag_amount = Vector::default();
 
@@ -89,14 +89,18 @@ impl CameraController
         let y = new_move_vector.y;
         let z = -new_move_vector.x * camera.rotation.y.sin() + new_move_vector.z * camera.rotation.y.cos();
         
-        window.get_window().set_cursor_visible(!self.mouse_down);
+        if self.mouse_down
+        {
+            let _ = window.get_window().set_cursor_position(LogicalPosition::new(self.mouse_down_pos.x, self.mouse_down_pos.y));                
+        }
         camera.eye += Vector::new3(x, y, z) * delta;
     }
 
-    pub fn mouse_click_event(&mut self, state : ElementState)
+    pub fn mouse_click_event(&mut self, state : ElementState, window : &mut ProspectWindow)
     {
         if state == ElementState::Pressed
         {
+            window.get_window().set_cursor_visible(self.mouse_down);
             self.mouse_down = !self.mouse_down;
             self.mouse_down_pos = self.current_mouse_pos;                
         }
@@ -106,12 +110,19 @@ impl CameraController
     {
         if self.mouse_down
         {
-            self.drag_amount += pos - self.mouse_down_pos;
             let _ = window.get_window().set_cursor_position(LogicalPosition::new(self.mouse_down_pos.x, self.mouse_down_pos.y));
         } else
         {
             self.current_mouse_pos = pos;
             self.drag_amount = Vector::default();
+        }
+    }
+
+    pub fn mouse_delta(&mut self, delta : Vector)
+    {
+        if self.mouse_down
+        {
+            self.drag_amount = delta;
         }
     }
 

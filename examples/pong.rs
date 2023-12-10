@@ -183,6 +183,12 @@ impl ProspectApp for PongApp {
 
                 ProcessResponse::DontProcess
             }
+            ProspectEvent::CursorDelta(delta) =>
+            {
+                self.cam_controller.mouse_delta(delta);
+
+                ProcessResponse::DontProcess
+            }
             ProspectEvent::CursorMoveEvent(cursor_pos) => {
                 self.cam_controller.mouse_move_event(cursor_pos, window);
 
@@ -194,7 +200,7 @@ impl ProspectApp for PongApp {
                 {
                     MouseButton::Right =>
                     {
-                        self.cam_controller.mouse_click_event(state)
+                        self.cam_controller.mouse_click_event(state, window)
                     }
                     _ => {}
                 }

@@ -8,6 +8,7 @@ pub enum ProspectEvent
 {
     KeyboardInput(Option<VirtualKeyCode>, ElementState),
     CursorMoveEvent(Vector),
+    CursorDelta(Vector),
     Focused(bool),
     CursorClicked(ElementState, MouseButton)
 }

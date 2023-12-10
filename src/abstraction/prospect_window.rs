@@ -173,6 +173,21 @@ impl ProspectWindow {
                     }
                 }
             }
+            Event::DeviceEvent { device_id, event } =>
+            {
+                match event
+                {
+                    winit::event::DeviceEvent::MouseMotion { delta } => {
+                        if let Some(flow) = self.process_input(
+                            ProspectEvent::CursorDelta(Vector::new2(delta.0 as f32, delta.1 as f32)),
+                            &mut app,
+                        ) {
+                            *control_flow = flow;
+                        }
+                    },
+                    _ => {}
+                }
+            }
             Event::MainEventsCleared => {
                 self.window.request_redraw();
             }
