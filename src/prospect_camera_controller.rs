@@ -1,5 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
+use vecto_rs::{linear::{Vector, VectorTrait, Mat4}, trig::to_radians};
 use winit::event::VirtualKeyCode;
 
 use crate::prospect_camera::ProspectCamera;
@@ -23,35 +24,52 @@ impl CameraController
 
     pub fn process(&mut self, delta : f32, camera : &mut ProspectCamera)
     {
+        let mut move_vector = Vector::new3(0., 0., 0.);
+
         if self.keys_down.contains(&VirtualKeyCode::W)
         {
-            camera.eye.z -= self.units_per_second * delta;
+            move_vector.z += self.units_per_second;
         }
 
         if self.keys_down.contains(&VirtualKeyCode::S)
         {
-            camera.eye.z += self.units_per_second * delta;
+            move_vector.z -= self.units_per_second;
         }
 
         if self.keys_down.contains(&VirtualKeyCode::A)
         {
-            camera.eye.x += self.units_per_second * delta;
+            move_vector.x -= self.units_per_second;
         }
         
         if self.keys_down.contains(&VirtualKeyCode::D)
         {
-            camera.eye.x -= self.units_per_second * delta;
+            move_vector.x += self.units_per_second;
         }
 
-        if self.keys_down.contains(&VirtualKeyCode::E)
+        if self.keys_down.contains(&VirtualKeyCode::LControl)
         {
-            camera.eye.y += self.units_per_second * delta;
+            move_vector.y -= self.units_per_second;
         }
         
-        if self.keys_down.contains(&VirtualKeyCode::Q)
+        if self.keys_down.contains(&VirtualKeyCode::Space)
         {
-            camera.eye.y -= self.units_per_second * delta;
+            move_vector.y += self.units_per_second;
         }
+        
+        if self.keys_down.contains(&VirtualKeyCode::Right)
+        {
+            camera.rotation.y += self.units_per_second * delta;
+        }
+
+        if self.keys_down.contains(&VirtualKeyCode::Left)
+        {
+            camera.rotation.y -= self.units_per_second * delta;
+        }
+
+        let x = move_vector.x * camera.rotation.y.cos() + move_vector.z * camera.rotation.y.sin();
+        let z = -move_vector.x * camera.rotation.y.sin() + move_vector.z * camera.rotation.y.cos();
+
+        camera.eye += Vector::new3(x, move_vector.y, z) * delta;
     }
 
     pub fn key_pressed(&mut self, key : VirtualKeyCode)

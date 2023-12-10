@@ -155,7 +155,7 @@ impl ProspectApp for PongApp {
     fn process(&mut self, event: ProspectEvent) -> ProcessResponse {
         match event {
             ProspectEvent::KeyboardInput(key, ElementState::Pressed) => {
-                if key == Some(VirtualKeyCode::Space) {
+                if key == Some(VirtualKeyCode::Tab) {
                     self.draw_triangle = !self.draw_triangle;
                 }
                 

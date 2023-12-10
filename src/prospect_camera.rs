@@ -41,7 +41,7 @@ pub struct ProspectCamera {
     pub fov: f32,
     pub znear: f32,
     pub zfar: f32,
-    rotation : Vector,
+    pub rotation : Vector,
     uniform : CamUniform,
     buffer : Buffer,
     bind_group : BindGroup,
@@ -87,7 +87,8 @@ impl ProspectCamera {
     pub fn generate_projection_matrix(&self, width : f32, height : f32) -> Mat4
     {
         let mut view = Mat4::identity();
-        view.translate(self.eye);
+        view.rotate(-self.rotation.y, Vector::new3(0., 1., 0.));
+        view.translate(self.eye * -1.);
         let projection = Mat4::new_perspective_matrix(width, height, self.fov, self.znear, self.zfar);
         let cam_matrix = OPENGL_TO_WGPU_MATRIX * projection * view;
         cam_matrix
