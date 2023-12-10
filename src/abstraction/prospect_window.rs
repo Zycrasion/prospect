@@ -7,7 +7,7 @@ use wgpu::{
    *
 };
 use winit::error::ExternalError;
-use winit::window::CursorGrabMode;
+use winit::window::{CursorGrabMode, self};
 use winit::{
     dpi::PhysicalSize,
     event::{Event, VirtualKeyCode, WindowEvent, ElementState},
@@ -105,6 +105,11 @@ impl ProspectWindow {
     pub fn add_bind_group<S : AsRef<str>>(&mut self, name : S,  bind_group : BindGroup) -> ProspectBindGroupIndex
     {
         self.shader_manager.add_bind_group(name, bind_group)
+    }
+
+    pub fn get_window(&mut self) -> &mut Window
+    {
+        &mut self.window
     }
 
     pub fn lock_cursor(&mut self,lock_mode : CursorGrabMode) -> Result<(), ExternalError>

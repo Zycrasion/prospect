@@ -56,7 +56,7 @@ impl ProspectCamera {
 
         ProspectCamera {
             eye: Vector::new3(0., 0., 0.),
-            fov: 90.,
+            fov: 40.,
             znear: 0.1,
             zfar: 100.,
             uniform : CamUniform::new(),
@@ -69,6 +69,21 @@ impl ProspectCamera {
 
     pub fn process_frame(&mut self, width : f32, height : f32, queue : &Queue)
     {
+        if self.rotation.x.abs() >= (2. * PI)
+        {
+            self.rotation.x -= (2. * PI) * self.rotation.x.signum();
+        }
+
+        if self.rotation.y.abs() >= (2. * PI)
+        {
+            self.rotation.y -= (2. * PI) * self.rotation.x.signum();
+        }
+
+        if self.rotation.z.abs() >= (2. * PI)
+        {
+            self.rotation.z -= (2. * PI) * self.rotation.x.signum();
+        }
+
         let projection = &self.generate_projection_matrix(width, height);
         self.uniform.update_proj(&projection.get_column_major());
         GraphicsContext::update_buffer(queue, &self.buffer, 0, &[self.uniform]);
@@ -87,7 +102,9 @@ impl ProspectCamera {
     pub fn generate_projection_matrix(&self, width : f32, height : f32) -> Mat4
     {
         let mut view = Mat4::identity();
+        view.rotate(-self.rotation.x, Vector::new3(1., 0., 0.));
         view.rotate(-self.rotation.y, Vector::new3(0., 1., 0.));
+        view.rotate(-self.rotation.z, Vector::new3(0., 0., 1.));
         view.translate(self.eye * -1.);
         let projection = Mat4::new_perspective_matrix(width, height, self.fov, self.znear, self.zfar);
         let cam_matrix = OPENGL_TO_WGPU_MATRIX * projection * view;

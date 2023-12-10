@@ -1460,8 +1460,8 @@ checksum = "f1bddf1187be692e79c5ffeab891132dfb0f236ed36a43c7ed39f1165ee20191"
 
 [[package]]
 name = "vecto-rs"
-version = "2.0.0"
-source = "git+https://github.com/Zycrasion/vecto-rs#99639b4a11bca5adaac7e224d442a81bcf59af4f"
+version = "2.0.3"
+source = "git+https://github.com/Zycrasion/vecto-rs#b4799012f288965c875d073f26b3a6d0838dcdee"
 
 [[package]]
 name = "version_check"

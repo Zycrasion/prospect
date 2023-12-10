@@ -68,7 +68,6 @@ fn main() {
 }
 
 pub struct PongApp {
-    clear_col: (f64, f64, f64),
     triangle_mesh: Mesh,
     car: Mesh,
     draw_triangle: bool,
@@ -105,10 +104,7 @@ impl PongApp {
         
         let triangle_mesh = Mesh::from_shape(&TRIANGLE, window.get_device(), &main_shader);
 
-        window.lock_cursor(CursorGrabMode::Confined).unwrap();
-
         Self {
-            clear_col: (0., 0., 0.),
             triangle_mesh,
             car,
             draw_triangle: true,
@@ -124,22 +120,25 @@ impl ProspectApp for PongApp {
     fn setup(&mut self, window: &mut ProspectWindow) {}
 
     fn draw(&mut self, window: &mut ProspectWindow) -> Result<(), SurfaceError> {
-        let clear_colour = (
-            self.clear_col.0 / window.size.0 as f64,
-            self.clear_col.1 / window.size.1 as f64,
-            0.5,
-        );
-
+        /* update */
         let this_time = SystemTime::now();
         let delta = this_time.duration_since(self.last_frame).unwrap_or(Duration::from_secs_f32(1. / 60.)).as_secs_f32();
         self.last_frame = this_time;
 
+        self.cam_controller.process(delta, &mut self.camera, window);
+        self.camera.process_frame(window.size.0 as f32, window.size.1 as f32, window.get_queue());
+
+        let clear_colour = (
+            0.5,
+            0.0,
+            0.5,
+        );
+
+        /* draw */
         let (output, view, mut command_encoder) = HighLevelGraphicsContext::init_view(window);
         let mut render_pass =
             HighLevelGraphicsContext::start_render(clear_colour, &view, window.get_depth_buffer(), &mut command_encoder);
         
-        self.cam_controller.process(delta, &mut self.camera);
-        self.camera.process_frame(window.size.0 as f32, window.size.1 as f32, window.get_queue());
 
         if !self.draw_triangle {
             self.triangle_mesh.draw(&mut render_pass, window.get_shader_manager(), &self.camera);
@@ -156,12 +155,6 @@ impl ProspectApp for PongApp {
 
     fn process(&mut self, event: ProspectEvent, window: &mut ProspectWindow) -> ProcessResponse {
         match event {
-            ProspectEvent::Focused(true) | ProspectEvent::CursorClicked(ElementState::Pressed, MouseButton::Left) =>
-            {
-                window.lock_cursor(CursorGrabMode::Confined).unwrap();
-
-                ProcessResponse::DontProcess
-            }
             ProspectEvent::KeyboardInput(key, ElementState::Pressed) => {
                 if key == Some(VirtualKeyCode::Tab) {
                     self.draw_triangle = !self.draw_triangle;
@@ -191,8 +184,20 @@ impl ProspectApp for PongApp {
                 ProcessResponse::DontProcess
             }
             ProspectEvent::CursorMoveEvent(cursor_pos) => {
-                self.clear_col.0 = cursor_pos.x as f64;
-                self.clear_col.1 = cursor_pos.y as f64;
+                self.cam_controller.mouse_move_event(cursor_pos, window);
+
+                ProcessResponse::DontProcess
+            }
+            ProspectEvent::CursorClicked(state, button) =>
+            {
+                match button
+                {
+                    MouseButton::Right =>
+                    {
+                        self.cam_controller.mouse_click_event(state)
+                    }
+                    _ => {}
+                }
                 ProcessResponse::DontProcess
             }
             _ => {ProcessResponse::ProspectProcess}
