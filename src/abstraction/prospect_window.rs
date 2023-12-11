@@ -1,4 +1,5 @@
 use crate::prospect_camera::{ProspectCamera, CamUniform};
+use crate::prospect_light::ProspectPointLight;
 use crate::{prospect_app::ProspectApp, prospect_shader_manager::ProspectBindGroupIndex};
 use crate::prospect_shader_manager::{ProspectShaderManager, ProspectShaderIndex};
 use crate::prospect_app::*;
@@ -96,9 +97,11 @@ impl ProspectWindow {
         &self.queue
     }
 
-    pub fn add_shader(&mut self, shader : &impl ProspectShader, camera : &ProspectCamera) -> ProspectShaderIndex
+    pub fn add_shader(&mut self, shader : &impl ProspectShader, camera : &ProspectCamera, uniforms : Vec<&BindGroupLayout>) -> ProspectShaderIndex
     {
-        let a = vec![camera.get_layout()];
+        let mut a = uniforms.clone();
+        a.insert(0, camera.get_layout());
+
         self.shader_manager.add_shader(shader, &self.device, a)
     }
 

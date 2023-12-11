@@ -1,7 +1,4 @@
-use wgpu::{
-    Backends, CommandEncoder, Device, Queue, RenderPass, Surface, SurfaceConfiguration,
-    SurfaceTexture, TextureView, RenderPipeline, BindGroupLayout,
-};
+use wgpu::*;
 use winit::{event_loop::EventLoop, window::Window};
 
 use super::{graphics_context::GraphicsContext, prospect_window::ProspectWindow, shader::ProspectShader};
@@ -92,5 +89,15 @@ impl HighLevelGraphicsContext {
     {
         let texture = GraphicsContext::create_texture(name, bytes, window.get_device(), window.get_queue());
         GraphicsContext::create_texture_view(&texture)
+    }
+
+    pub fn create_uniform(device : &Device, label : &str, stage : ShaderStages, buffer : &Buffer) -> (BindGroupLayout, BindGroup)
+    {
+        let bind_group_layout_entry = GraphicsContext::create_bind_group_layout_entry(0, stage, GraphicsContext::create_uniform_binding_type());
+        let bind_group_layout = GraphicsContext::create_bind_group_layout(&device, label, &vec![bind_group_layout_entry]);
+
+        let bind_group_entry = GraphicsContext::create_bind_group_entry(0, buffer.as_entire_binding());
+        let bind_group = GraphicsContext::create_bind_group(&device, label, &bind_group_layout, &vec![bind_group_entry]);
+        (bind_group_layout, bind_group)
     }
 }

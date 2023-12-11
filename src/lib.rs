@@ -6,3 +6,4 @@ pub mod shaders;
 pub mod utils;
 pub mod prospect_camera;
 pub mod prospect_camera_controller;
+pub mod prospect_light;

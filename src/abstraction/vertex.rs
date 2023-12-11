@@ -7,7 +7,8 @@ use wgpu::{VertexBufferLayout, VertexStepMode, VertexAttribute, VertexFormat, Bu
 pub struct Vertex
 {
     pub position : [f32; 3],
-    pub uv : [f32; 2]
+    pub uv : [f32; 2],
+    pub normal : [f32; 3]
 }
 
 impl Vertex
@@ -25,6 +26,11 @@ impl Vertex
                 format: VertexFormat::Float32x2,
                 offset: std::mem::size_of::<[f32; 3]>() as BufferAddress,
                 shader_location: 1,
+            },
+            VertexAttribute {
+                format: VertexFormat::Float32x3,
+                offset: std::mem::size_of::<[f32; 5]>() as BufferAddress,
+                shader_location: 2,
             },
         ],
     };
