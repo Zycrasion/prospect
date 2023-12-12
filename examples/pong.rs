@@ -16,71 +16,35 @@ use vecto_rs::{linear::{Vector, VectorTrait}, trig::to_degrees};
 use wgpu::SurfaceError;
 use winit::{event::{ElementState, VirtualKeyCode, MouseButton}, window::CursorGrabMode};
 
-const PENTAGON: ProspectShape<&[Vertex], &[u16]> = ProspectShape {
-    vertices: &[
-        Vertex {
-            position: [-0.0868241, 0.49240386, 0.0],
-            uv: [-0.0868241, 0.49240386],
-            normal: [0.; 3]
-        }, // A
-        Vertex {
-            position: [-0.49513406, 0.06958647, 0.0],
-            uv: [-0.49513406, 0.06958647],
-            normal: [0.; 3]
-        }, // B
-        Vertex {
-            position: [-0.21918549, -0.44939706, 0.0],
-            uv: [-0.21918549, -0.44939706],
-            normal: [0.; 3]
-        }, // C
-        Vertex {
-            position: [0.35966998, -0.3473291, 0.0],
-            uv: [0.35966998, -0.3473291],
-            normal: [0.; 3]
-        },// D
-        Vertex {
-            position: [0.44147372, 0.2347359, 0.0],
-            uv: [0.44147372, 0.2347359],
-            normal: [0.; 3]
-        }, // E
-    ],
-    indices: Some(&[0u16, 1, 4, 1, 2, 4, 2, 3, 4]),
-};
-
-const TRIANGLE: ProspectShape<&[Vertex], &[u16]> = ProspectShape {
-    vertices: &[
-        Vertex {
-            position: [0.0, 0.5, 0.],
-            uv : [1., 0.],
-            normal : [0.; 3]
-        },
-        Vertex {
-            position: [0.5, -0.5, 0.],
-            uv : [0., 1.],
-            normal : [0.; 3]
-        },
-        Vertex {
-            position: [-0.5, -0.5, 0.],
-            uv : [1., 1.],
-            normal : [0.; 3]
-        },
-    ],
-    indices: None,
-};
-
 fn main() {
     let mut window = ProspectWindow::new("Pong", 480, 480);
 
     let app = PongApp::new(&mut window);
-    window.run_with_app(Box::new(app))
+    window.run_with_app(Box::new(app));
+}
+
+fn to_shape(str : &str) -> ProspectShape<Vec<Vertex>, Vec<u16>>
+{
+
+    let mut mesh = parse_obj(str);
+    let verts = mesh.extract_vertices_and_uv_and_normals();
+    let mut shape : ProspectShape<Vec<Vertex>, Vec<u16>> = ProspectShape { vertices: Vec::new(), indices: None };
+
+    for vert in verts
+    {
+        shape.vertices.push(Vertex { position: [vert.0.x, vert.0.y, vert.0.z], uv: [vert.1.x, 1. - vert.1.y], normal : [vert.2.x, vert.2.y, vert.2.z] })
+    }
+
+    shape
 }
 
 pub struct PongApp {
-    triangle_mesh: Mesh,
+    light_mesh: Mesh,
     light_model : Model3D,
     car_mesh : Mesh,
+    mario_mesh : Mesh,
     car1: Model3D,
-    car2 : Model3D,
+    mario : Model3D,
     draw_triangle: bool,
     frame : f32,
     camera: ProspectCamera,
@@ -88,7 +52,6 @@ pub struct PongApp {
     last_frame : SystemTime,
     light : ProspectPointLight
 }
-
 
 impl PongApp {
     fn new(window: &mut ProspectWindow) -> Self {
@@ -99,36 +62,34 @@ impl PongApp {
 
         let default_shader = Default3D::new(&window);
         let default_shader_key = window.add_shader(&default_shader, &camera, vec![light.get_layout()]);
-        let main_shader = BasicShader::new(&window);
-        let bad_shader = window.add_shader(&main_shader, &camera, vec![]);
 
-        let texture = default_shader.register_texture("Car Texture", include_bytes!("../res/car01_Car_Pallete.png"), window);
+        let car_texture = default_shader.register_texture("Car Texture", include_bytes!("../res/car01_Car_Pallete.png"), window);
+        let light_texture = default_shader.register_texture("Light Texture", include_bytes!("../res/light.png"), window);
+        let mario_texture = default_shader.register_texture("Mario Texture", include_bytes!("../res/mario.png"), window);
 
-        let mut car_mesh = parse_obj(include_str!("../res/car01.obj"));
-        let car_mesh_verts = car_mesh.extract_vertices_and_uv_and_normals();
-        let mut shape : ProspectShape<Vec<Vertex>, Vec<u16>> = ProspectShape { vertices: Vec::new(), indices: None };
-
-        for vert in car_mesh_verts
-        {
-            shape.vertices.push(Vertex { position: [vert.0.x, vert.0.y, vert.0.z], uv: [vert.1.x, 1. - vert.1.y], normal : [vert.2.x, vert.2.y, vert.2.z] })
-        }
-
-        let mut car_mesh = Mesh::from_shape(&shape, window.get_device(), &default_shader_key);
-        car_mesh.set_bind_group(1, &texture);
+        let mut car_mesh = Mesh::from_shape(&to_shape(include_str!("../res/car01.obj")), window.get_device(), &default_shader_key);
+        car_mesh.set_bind_group(1, &car_texture);
         car_mesh.set_bind_group(2, light.get_bind_index());
         let car1 = Model3D::new(&default_shader, window);
-        let car2 = Model3D::new(&default_shader, window);
+
+        let mut mario_mesh = Mesh::from_shape(&to_shape(include_str!("../res/mario.obj")), window.get_device(), &default_shader_key);
+        mario_mesh.set_bind_group(1, &mario_texture);
+        mario_mesh.set_bind_group(2, light.get_bind_index());
+        let mario = Model3D::new(&default_shader, window);
         
-        let triangle_mesh = Mesh::from_shape(&TRIANGLE, window.get_device(), &bad_shader);
+        let mut light_mesh = Mesh::from_shape(&to_shape(include_str!("../res/light.obj")), window.get_device(), &default_shader_key);
+        light_mesh.set_bind_group(1, &light_texture);
+        light_mesh.set_bind_group(2, light.get_bind_index());
 
         let light_model = Model3D::new(&default_shader, window);
 
         Self {
-            triangle_mesh,
+            light_mesh,
             light_model,
+            mario_mesh,
             car_mesh,
-            car1 : car1,
-            car2 : car2,
+            car1,
+            mario,
             draw_triangle: true,
             frame: 1.,
             camera,
@@ -153,8 +114,9 @@ impl ProspectApp for PongApp {
         self.camera.process_frame(window.size.0 as f32, window.size.1 as f32, window.get_queue());
 
         self.car1.transform.rotation.y += to_degrees(delta);
-        self.car2.transform.position.x = self.frame.sin() * 5.;
-        self.car2.transform.position.z = self.frame.cos() * 5.;
+        self.mario.transform.position.x = (self.frame / 2.).sin() * 5.;
+        self.mario.transform.position.z = (self.frame / 2.).cos() * 5.;
+        self.mario.transform.scale = 0.1;
         self.light_model.transform.position = self.light.position;
 
         let clear_colour = (
@@ -168,13 +130,9 @@ impl ProspectApp for PongApp {
         let mut render_pass =
             HighLevelGraphicsContext::start_render(clear_colour, &view, window.get_depth_buffer(), &mut command_encoder);
         
-
-        self.triangle_mesh.draw(&mut render_pass, window.get_shader_manager(), &self.camera);
-
-        /// TODO: Get better Light Mesh
-        self.light_model.draw(&mut render_pass, window, &self.camera, &self.car_mesh);
+        self.light_model.draw(&mut render_pass, window, &self.camera, &self.light_mesh);
         self.car1.draw(&mut render_pass, window, &self.camera, &self.car_mesh);
-        self.car2.draw(&mut render_pass, window, &self.camera, &self.car_mesh);
+        self.mario.draw(&mut render_pass, window, &self.camera, &self.mario_mesh);
 
         drop(render_pass);
 

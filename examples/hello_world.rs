@@ -9,9 +9,9 @@ use winit::event::VirtualKeyCode;
 const TRIANGLE : ProspectShape<&[Vertex], &[u16]> = ProspectShape
 {
     vertices: &[
-        Vertex { position : [  0.0,  0.5, 0.], uv : [0.5, 0.0] },
-        Vertex { position : [  0.5, -0.5, 0.], uv : [1.0, 1.0] },
-        Vertex { position : [ -0.5, -0.5, 0.], uv : [0.0, 1.0] },
+        Vertex { position : [  0.0,  0.5, 0.], uv : [0.5, 0.0], normal : [0.; 3] },
+        Vertex { position : [  0.5, -0.5, 0.], uv : [1.0, 1.0], normal : [0.; 3] },
+        Vertex { position : [ -0.5, -0.5, 0.], uv : [0.0, 1.0], normal : [0.; 3] },
     ],
     indices: None,
 };
@@ -37,7 +37,7 @@ impl HelloWorld
         let basic_shader = BasicShader::new(window);
         let mut camera = ProspectCamera::new(window.get_device());
         camera.eye = Vector::new3(0., 0., 1.);
-        let basic_shader = window.add_shader(&basic_shader, &camera);
+        let basic_shader = window.add_shader(&basic_shader, &camera, vec![]);
 
         let mesh = Mesh::from_shape(&TRIANGLE, window.get_device(), &basic_shader);
 

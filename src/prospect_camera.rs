@@ -18,7 +18,8 @@ pub const OPENGL_TO_WGPU_MATRIX: Mat4 = Mat4::from_array([
 #[derive(Clone, Copy, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct CamUniform
 {
-    mat : [f32; 4 * 4]
+    mat : [f32; 4 * 4],
+    pos : [f32; 4],
 }
 
 impl CamUniform {
@@ -26,13 +27,15 @@ impl CamUniform {
     {
         Self
         {
-            mat : Mat4::identity().get_contents()
+            mat : Mat4::identity().get_contents(),
+            pos : [0.; 4]
         }
     }
 
-    pub fn update_proj(&mut self, cam : &Mat4)
+    pub fn update_proj(&mut self, cam : &Mat4, pos : &Vector)
     {
-        self.mat = cam.get_contents()
+        self.mat = cam.get_contents();
+        self.pos = [pos.x, pos.y, pos.z, 0.0];
     }
 }
 
@@ -85,7 +88,7 @@ impl ProspectCamera {
         }
 
         let projection = &self.generate_projection_matrix(width, height);
-        self.uniform.update_proj(&projection.get_column_major());
+        self.uniform.update_proj(&projection.get_column_major(), &self.eye);
         GraphicsContext::update_buffer(queue, &self.buffer, 0, &[self.uniform]);
     }
 
@@ -113,7 +116,7 @@ impl ProspectCamera {
 
     fn create_uniform(buffer : &Buffer, device : &Device) -> (BindGroup, BindGroupLayout)
     {
-        let cam_bind_group_layout_entry = GraphicsContext::create_bind_group_layout_entry(0, ShaderStages::VERTEX, GraphicsContext::create_uniform_binding_type());
+        let cam_bind_group_layout_entry = GraphicsContext::create_bind_group_layout_entry(0, ShaderStages::VERTEX_FRAGMENT, GraphicsContext::create_uniform_binding_type());
         let cam_bind_group_layout = GraphicsContext::create_bind_group_layout(&device, "Camera Bind Group Layout", &vec![cam_bind_group_layout_entry]);
 
         let cam_bind_group_entry = GraphicsContext::create_bind_group_entry(0, buffer.as_entire_binding());

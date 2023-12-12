@@ -20,6 +20,7 @@ var<uniform> model_information : ModelInformation;
 
 struct CameraUniform {
     view_proj: mat4x4<f32>,
+    view_pos: vec4<f32>
 };
 @group(0) @binding(0)
 var<uniform> camera: CameraUniform;
@@ -38,7 +39,7 @@ fn vs_main(
 {
     var out : VertexOutput;
     out.tex_coords = model.tex_coords;
-    out.world_normal = (model_information.matrix * vec4<f32>(model.normal, 0.0)).xyz;
+    out.world_normal = normalize(model_information.matrix * vec4<f32>(model.normal, 0.0)).xyz;
     var world_position : vec4<f32> = model_information.matrix * vec4<f32>(model.position, 1.0);
     out.world_position = world_position.xyz;
     out.clip_position = camera.view_proj * world_position;
@@ -64,7 +65,14 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32>
     let diffuse_strength = max(dot(in.world_normal, light_dir), 0.0);
     let diffuse_colour = light.colour * diffuse_strength;
 
-    let result = (ambient_colour + diffuse_colour) * object_col.xyz; 
+    let view_dir = normalize(camera.view_pos.xyz - in.world_position);
+    let half_dir = normalize(view_dir + light_dir);
+    let reflect_dir = reflect(-light_dir, in.world_normal);
+
+    let specular_strength = pow(max(dot(in.world_normal, half_dir), 0.0), 32.0);
+    let specular_colour = light.colour * specular_strength;
+
+    let result = (ambient_colour + diffuse_colour + specular_colour) * object_col.xyz; 
 
     return vec4<f32>(result, object_col.a);
 }
