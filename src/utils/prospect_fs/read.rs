@@ -13,3 +13,15 @@ pub fn read_file_panic<S : AsRef<str>>(path : S) -> String
     let file = file.unwrap();
     file
 }
+
+pub fn read_file_with_respect_to_cwd<S : AsRef<str>>(path : S) -> String
+{
+    let path = std::env::current_dir().unwrap().join(Path::new(path.as_ref()));
+    fs::read_to_string(path).unwrap()
+}
+
+pub fn read_file_with_respect_to_cwd_bytes<S : AsRef<str>>(path : S) -> Vec<u8>
+{
+    let path = std::env::current_dir().unwrap().join(Path::new(path.as_ref()));
+    fs::read(path).unwrap()
+}

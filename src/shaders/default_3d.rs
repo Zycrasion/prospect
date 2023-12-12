@@ -56,7 +56,7 @@ impl Default3D {
     ) -> Self {
         let surface = window.get_surface_config();
         let device = window.get_device();
-        let src = read_file_panic("src/shaders/default_3d.wgsl");
+        let src = include_str!("default_3d.wgsl");
 
         let sampler = GraphicsContext::create_sampler("Default3D Shader Sampler", device, None, None);
         let entries = vec![

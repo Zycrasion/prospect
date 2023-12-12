@@ -55,7 +55,7 @@ impl TexturedShader {
     ) -> Self {
         let surface = window.get_surface_config();
         let device = window.get_device();
-        let src = read_file_panic("src/shaders/textured_shader.wgsl");
+        let src = include_str!("textured_shader.wgsl");
 
         let sampler = GraphicsContext::create_sampler("Textured Shader Sampler", device, None, None);
         let entries = vec![

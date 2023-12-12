@@ -17,9 +17,9 @@ use wgpu::SurfaceError;
 use winit::{event::{ElementState, VirtualKeyCode, MouseButton}, window::CursorGrabMode};
 
 fn main() {
-    let mut window = ProspectWindow::new("Pong", 480, 480);
+    let mut window = ProspectWindow::new("Test Window", 480, 480);
 
-    let app = PongApp::new(&mut window);
+    let app = TestApp::new(&mut window);
     window.run_with_app(Box::new(app));
 }
 
@@ -38,7 +38,7 @@ fn to_shape(str : &str) -> ProspectShape<Vec<Vertex>, Vec<u16>>
     shape
 }
 
-pub struct PongApp {
+pub struct TestApp {
     light_mesh: Mesh,
     light_model : Model3D,
     car_mesh : Mesh,
@@ -53,7 +53,7 @@ pub struct PongApp {
     light : ProspectPointLight
 }
 
-impl PongApp {
+impl TestApp {
     fn new(window: &mut ProspectWindow) -> Self {
         let camera = ProspectCamera::new(window.get_device());
         let mut light  = ProspectPointLight::new(window);
@@ -100,7 +100,7 @@ impl PongApp {
     }
 }
 
-impl ProspectApp for PongApp {
+impl ProspectApp for TestApp {
     fn setup(&mut self, window: &mut ProspectWindow) {}
 
     fn draw(&mut self, window: &mut ProspectWindow) -> Result<(), SurfaceError> {

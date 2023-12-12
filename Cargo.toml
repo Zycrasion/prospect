@@ -5,6 +5,9 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[workspace]
+members = ["examples/obj_realtime_updater"]
+
 [dependencies]
 bytemuck = { version = "1.14.0", features = ["derive"] }
 env_logger = "0.10.0"
@@ -18,3 +21,8 @@ winit = "0.28.7"
 
 [profile.dev.package."*"]
 opt-level = 3
+
+[build-dependencies]
+anyhow = "1.0"
+fs_extra = "1.2"
+glob = "0.3"
