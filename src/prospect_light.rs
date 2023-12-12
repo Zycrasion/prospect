@@ -36,7 +36,7 @@ impl ProspectPointLight
         {
             colour : Vector::new3(1., 1., 1.),
             position : Vector::default(),
-            index: window.add_bind_group("PointLight uniform", bind_group),
+            index: window.auto_add_bind_group(bind_group),
             buffer,
             layout,
         }
@@ -65,7 +65,7 @@ impl ProspectPointLight
 
     fn build_uniform(window : &ProspectWindow, buffer : &Buffer) -> (BindGroupLayout, BindGroup)
     {
-        HighLevelGraphicsContext::create_uniform(window.get_device(), "Point Light Uniform", ShaderStages::VERTEX_FRAGMENT, &buffer)
+        HighLevelGraphicsContext::create_uniform_and_bind_group(window.get_device(), "Point Light Uniform", ShaderStages::VERTEX_FRAGMENT, &buffer)
     }
 
     fn build_buffer(window : &ProspectWindow, data : LightUniform) -> Buffer

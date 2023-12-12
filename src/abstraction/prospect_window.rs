@@ -110,6 +110,11 @@ impl ProspectWindow {
         self.shader_manager.add_bind_group(name, bind_group)
     }
 
+    pub fn auto_add_bind_group(&mut self, bind_group : BindGroup) -> ProspectBindGroupIndex
+    {
+        self.shader_manager.auto_add_bind_group(bind_group)
+    }
+
     pub fn get_window(&mut self) -> &mut Window
     {
         &mut self.window

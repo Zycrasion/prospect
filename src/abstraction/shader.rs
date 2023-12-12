@@ -9,6 +9,7 @@ pub trait ProspectShader : Sized {
     fn get_module(&self) -> &ShaderModule;
     fn fragment_state(&self) -> FragmentState;
     fn vertex_state(&self) -> VertexState;
+    fn get_model_matrix_bind_layout(&self) -> Option<&BindGroupLayout> {None}
 
     fn build_render_pipeline(&self, device : &Device, bind_groups : Vec<&BindGroupLayout>) -> RenderPipeline
     {

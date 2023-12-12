@@ -91,7 +91,14 @@ impl HighLevelGraphicsContext {
         GraphicsContext::create_texture_view(&texture)
     }
 
-    pub fn create_uniform(device : &Device, label : &str, stage : ShaderStages, buffer : &Buffer) -> (BindGroupLayout, BindGroup)
+    pub fn create_uniform_with_bind_group(device : &Device, label : &str, buffer : &Buffer, bind_group_layout : &BindGroupLayout) -> BindGroup
+    {
+        let bind_group_entry = GraphicsContext::create_bind_group_entry(0, buffer.as_entire_binding());
+        let bind_group = GraphicsContext::create_bind_group(&device, label, bind_group_layout, &vec![bind_group_entry]);
+        bind_group
+    }
+
+    pub fn create_uniform_and_bind_group(device : &Device, label : &str, stage : ShaderStages, buffer : &Buffer) -> (BindGroupLayout, BindGroup)
     {
         let bind_group_layout_entry = GraphicsContext::create_bind_group_layout_entry(0, stage, GraphicsContext::create_uniform_binding_type());
         let bind_group_layout = GraphicsContext::create_bind_group_layout(&device, label, &vec![bind_group_layout_entry]);

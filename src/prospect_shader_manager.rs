@@ -46,6 +46,12 @@ impl ProspectShaderManager
         ProspectBindGroupIndex(name.as_ref().to_string())
     }
 
+    pub fn auto_add_bind_group(&mut self, bind_group : BindGroup) -> ProspectBindGroupIndex
+    {
+        let name = self.bind_groups.len().to_string();
+        self.add_bind_group(name, bind_group)
+    }
+
     pub fn apply_bind_group<'a>(&'a self, render_pass : &mut RenderPass<'a> ,key : &ProspectBindGroupIndex, loc : u32, offsets : &[u32])
     {
         let bind_group = self.bind_groups.get(key);

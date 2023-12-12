@@ -11,6 +11,13 @@ struct VertexOutput {
     @location(2) world_position : vec3<f32>
 }
 
+struct ModelInformation {
+    matrix : mat4x4<f32>,
+};
+
+@group(3) @binding(0)
+var<uniform> model_information : ModelInformation;
+
 struct CameraUniform {
     view_proj: mat4x4<f32>,
 };
@@ -31,9 +38,10 @@ fn vs_main(
 {
     var out : VertexOutput;
     out.tex_coords = model.tex_coords;
-    out.world_normal = model.normal;
-    out.world_position = model.position;
-    out.clip_position = camera.view_proj * vec4<f32>(model.position, 1.0);
+    out.world_normal = (model_information.matrix * vec4<f32>(model.normal, 0.0)).xyz;
+    var world_position : vec4<f32> = model_information.matrix * vec4<f32>(model.position, 1.0);
+    out.world_position = world_position.xyz;
+    out.clip_position = camera.view_proj * world_position;
     return out;
 }
 

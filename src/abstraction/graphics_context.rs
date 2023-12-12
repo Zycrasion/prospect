@@ -349,7 +349,7 @@ impl GraphicsContext {
         }
     }
 
-    pub fn create_bind_group_layout_entry(
+    pub const fn create_bind_group_layout_entry(
         binding: u32,
         shader_stage: ShaderStages,
         ty: BindingType,

@@ -8,7 +8,8 @@ pub struct Default3D {
     module: ShaderModule,
     color_target_state: Vec<Option<ColorTargetState>>,
     bind_layout : BindGroupLayout,
-    sampler : Sampler
+    sampler : Sampler,
+    matrix_bind_group_layout : BindGroupLayout
 }
 
 impl ProspectShader for Default3D {
@@ -36,9 +37,15 @@ impl ProspectShader for Default3D {
         }
     }
 
+    fn get_model_matrix_bind_layout(&self) -> Option<&BindGroupLayout> {
+        Some(&self.matrix_bind_group_layout)
+    }
+
     fn build_render_pipeline(&self, device: &Device, bind_groups : Vec<&BindGroupLayout>) -> RenderPipeline {
         let mut bind_groups = bind_groups;
         bind_groups.insert(1, &self.bind_layout);
+        bind_groups.insert(3, &self.matrix_bind_group_layout);
+
         HighLevelGraphicsContext::create_render_pipeline("Default 3D Shader Render Pipeline", device, self, Some(&bind_groups))
     }
 }
@@ -51,17 +58,23 @@ impl Default3D {
         let device = window.get_device();
         let src = read_file_panic("src/shaders/default_3d.wgsl");
 
-        let sampler = GraphicsContext::create_sampler("Textured Shader Sampler", device, None, None);
+        let sampler = GraphicsContext::create_sampler("Default3D Shader Sampler", device, None, None);
         let entries = vec![
             GraphicsContext::create_bind_group_layout_entry(0, ShaderStages::FRAGMENT, GraphicsContext::create_texture_binding_type(false, TextureViewDimension::D2, TextureSampleType::Float { filterable: true })),
             GraphicsContext::create_bind_group_layout_entry(1, ShaderStages::FRAGMENT, GraphicsContext::create_sample_binding_type(wgpu::SamplerBindingType::Filtering))
         ];
-        let bind_group_layout = GraphicsContext::create_bind_group_layout(device, "Textured Shader Bind Group", &entries);
+        let bind_group_layout = GraphicsContext::create_bind_group_layout(device, "Default3D Shader Bind Group", &entries);
+
+        let matrix_bind_group_layout = vec![
+            GraphicsContext::create_bind_group_layout_entry(0, ShaderStages::VERTEX, GraphicsContext::create_uniform_binding_type())
+        ];
+        let matrix_bind_group_layout = GraphicsContext::create_bind_group_layout(device, "Default3D Matrix Bind Layout", &matrix_bind_group_layout);
 
         Self {
             sampler,
             bind_layout: bind_group_layout,
-            module: GraphicsContext::load_shader("Textured Shader", src.as_ref(), device),
+            matrix_bind_group_layout,
+            module: GraphicsContext::load_shader("Default3D Shader", src.as_ref(), device),
             color_target_state: vec![Some(ColorTargetState {
                 format: surface.format,
                 blend: Some(BlendState::REPLACE),

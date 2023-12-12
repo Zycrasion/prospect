@@ -9,10 +9,10 @@ use prospect::{
         vertex::Vertex, graphics_context::GraphicsContext,
     },
     prospect_app::{ProcessResponse, ProspectApp, ProspectEvent},
-    prospect_shape::ProspectShape, shaders::{textured_shader::TexturedShader, default_3d::Default3D}, prospect_camera::ProspectCamera, prospect_camera_controller::CameraController, prospect_light::ProspectPointLight,
+    prospect_shape::ProspectShape, shaders::{textured_shader::TexturedShader, default_3d::Default3D}, prospect_camera::ProspectCamera, prospect_camera_controller::CameraController, prospect_light::ProspectPointLight, model::Model3D,
 };
 use prospect_obj::parse_obj;
-use vecto_rs::linear::{Vector, VectorTrait};
+use vecto_rs::{linear::{Vector, VectorTrait}, trig::to_degrees};
 use wgpu::SurfaceError;
 use winit::{event::{ElementState, VirtualKeyCode, MouseButton}, window::CursorGrabMode};
 
@@ -77,7 +77,10 @@ fn main() {
 
 pub struct PongApp {
     triangle_mesh: Mesh,
-    car: Mesh,
+    light_model : Model3D,
+    car_mesh : Mesh,
+    car1: Model3D,
+    car2 : Model3D,
     draw_triangle: bool,
     frame : f32,
     camera: ProspectCamera,
@@ -97,7 +100,7 @@ impl PongApp {
         let default_shader = Default3D::new(&window);
         let default_shader_key = window.add_shader(&default_shader, &camera, vec![light.get_layout()]);
         let main_shader = BasicShader::new(&window);
-        let main_shader = window.add_shader(&main_shader, &camera, vec![]);
+        let bad_shader = window.add_shader(&main_shader, &camera, vec![]);
 
         let texture = default_shader.register_texture("Car Texture", include_bytes!("../res/car01_Car_Pallete.png"), window);
 
@@ -110,15 +113,22 @@ impl PongApp {
             shape.vertices.push(Vertex { position: [vert.0.x, vert.0.y, vert.0.z], uv: [vert.1.x, 1. - vert.1.y], normal : [vert.2.x, vert.2.y, vert.2.z] })
         }
 
-        let mut car = Mesh::from_shape(&shape, window.get_device(), &default_shader_key);
-        car.set_bind_group(1, &texture);
-        car.set_bind_group(2, light.get_bind_index());
+        let mut car_mesh = Mesh::from_shape(&shape, window.get_device(), &default_shader_key);
+        car_mesh.set_bind_group(1, &texture);
+        car_mesh.set_bind_group(2, light.get_bind_index());
+        let car1 = Model3D::new(&default_shader, window);
+        let car2 = Model3D::new(&default_shader, window);
         
-        let triangle_mesh = Mesh::from_shape(&TRIANGLE, window.get_device(), &main_shader);
+        let triangle_mesh = Mesh::from_shape(&TRIANGLE, window.get_device(), &bad_shader);
+
+        let light_model = Model3D::new(&default_shader, window);
 
         Self {
             triangle_mesh,
-            car,
+            light_model,
+            car_mesh,
+            car1 : car1,
+            car2 : car2,
             draw_triangle: true,
             frame: 1.,
             camera,
@@ -142,6 +152,11 @@ impl ProspectApp for PongApp {
         self.cam_controller.process(delta, &mut self.camera, window);
         self.camera.process_frame(window.size.0 as f32, window.size.1 as f32, window.get_queue());
 
+        self.car1.transform.rotation.y += to_degrees(delta);
+        self.car2.transform.position.x = self.frame.sin() * 5.;
+        self.car2.transform.position.z = self.frame.cos() * 5.;
+        self.light_model.transform.position = self.light.position;
+
         let clear_colour = (
             0.5,
             0.0,
@@ -154,11 +169,12 @@ impl ProspectApp for PongApp {
             HighLevelGraphicsContext::start_render(clear_colour, &view, window.get_depth_buffer(), &mut command_encoder);
         
 
-        if !self.draw_triangle {
-            self.triangle_mesh.draw(&mut render_pass, window.get_shader_manager(), &self.camera);
-        } else {
-            self.car.draw(&mut render_pass, window.get_shader_manager(), &self.camera);
-        }
+        self.triangle_mesh.draw(&mut render_pass, window.get_shader_manager(), &self.camera);
+
+        /// TODO: Get better Light Mesh
+        self.light_model.draw(&mut render_pass, window, &self.camera, &self.car_mesh);
+        self.car1.draw(&mut render_pass, window, &self.camera, &self.car_mesh);
+        self.car2.draw(&mut render_pass, window, &self.camera, &self.car_mesh);
 
         drop(render_pass);
 
