@@ -23,12 +23,12 @@ fn main() {
     window.run_with_app(Box::new(app));
 }
 
-fn to_shape(str : &str) -> ProspectShape<Vec<Vertex>, Vec<u16>>
+fn to_shape(str : &str) -> ProspectShape<Vec<Vertex>, Vec<u32>>
 {
 
     let mut mesh = parse_obj(str);
     let verts = mesh.extract_vertices_and_uv_and_normals();
-    let mut shape : ProspectShape<Vec<Vertex>, Vec<u16>> = ProspectShape { vertices: Vec::new(), indices: None };
+    let mut shape : ProspectShape<Vec<Vertex>, Vec<u32>> = ProspectShape { vertices: Vec::new(), indices: None };
 
     for vert in verts
     {

@@ -85,6 +85,14 @@ impl HighLevelGraphicsContext {
         pipeline
     }
 
+    pub fn create_render_pipeline_with_primitive_state(name: &str, device : &Device, shader : &impl ProspectShader, bind_groups : Option<&Vec<&BindGroupLayout>>, state : PrimitiveState) -> RenderPipeline
+    {
+        let layout = GraphicsContext::create_pipeline_layout(name, device, bind_groups.unwrap_or(&vec![]));
+        let pipeline = GraphicsContext::create_render_pipeline_with_primitive_state(name, &layout, shader.fragment_state(), shader.vertex_state(), device, state);
+        pipeline
+    }
+
+
     pub fn create_texture_from_file(name: &str, bytes : &[u8], window: &ProspectWindow) -> TextureView
     {
         let texture = GraphicsContext::create_texture(name, bytes, window.get_device(), window.get_queue());

@@ -1,10 +1,7 @@
 use std::path::Path;
 use std::time::{Duration, SystemTime};
 
-use futures::channel::mpsc::{channel, Receiver};
 
-use futures::{executor, SinkExt};
-use notify::{Event, RecommendedWatcher, Config, Watcher, ReadDirectoryChangesWatcher, PollWatcher, RecursiveMode};
 use prospect::parse_obj;
 use prospect::prospect_shader_manager::{ProspectBindGroupIndex, ProspectShaderIndex};
 use prospect::utils::prospect_fs::{path_with_respect_to_cwd_str, path_with_respect_to_cwd};
@@ -63,43 +60,9 @@ fn to_shape(str: &str) -> ProspectShape<Vec<Vertex>, Vec<u32>> {
     shape
 }
 
-fn watcher() -> notify::Result<(RecommendedWatcher, Receiver<notify::Result<Event>>)>
-{
-    let (mut tx, rx) = channel(1);
-
-    let watcher = RecommendedWatcher::new(
-        move |res| {
-            futures::executor::block_on(async {
-                tx.send(res).await.unwrap();
-            })
-        },
-        Config::default(),
-    )?;
-
-    Ok((watcher, rx))
-}
-
-fn watch<S: AsRef<str>>(path: S) -> notify::Result<(Receiver<Result<Event, notify::Error>>, RecommendedWatcher)>
-{
-    let (mut watcher, mut rx) = watcher()?;
-
-    println!("{}", path.as_ref().to_string());
-    watcher.watch(&Path::new(path.as_ref()), notify::RecursiveMode::Recursive)?;
-
-    Ok((rx, watcher))
-}
-
 pub struct ObjPreviewer {
-    shader : Default3D,
-    shader_key : ProspectShaderIndex,
     main_model: Model3D,
     main_mesh: Mesh,
-    texture : ProspectBindGroupIndex,
-    model_path: String,
-    texture_path: String,
-    model_rx : Receiver<Result<Event, notify::Error>>,
-    watcher: RecommendedWatcher,
-    frame: f32,
     camera: ProspectCamera,
     cam_controller: CameraController,
     last_frame: SystemTime,
@@ -117,43 +80,25 @@ impl ObjPreviewer {
         let default_shader_key =
             window.add_shader(&default_shader, &camera, vec![light.get_layout()]);
 
-        let model_path = std::env::args()
-            .nth(1)
-            .unwrap_or("res/car01.obj".to_string());
-        let texture_path = std::env::args()
-            .nth(2)
-            .unwrap_or("res/car01_Car_Pallete.png".to_string());
-
         let texture = default_shader.register_texture(
             "texture",
-            &read_file_with_respect_to_cwd_bytes(&texture_path),
+            include_bytes!("../res/car01_Car_Pallete.png"),
             window,
         );
 
         let mut main_mesh = Mesh::from_shape(
-            &to_shape(&read_file_with_respect_to_cwd(&model_path)),
+            &to_shape(include_str!("../res/car01.obj")),
             window.get_device(),
             &default_shader_key,
         );
         main_mesh.set_bind_group(1, &texture);
         main_mesh.set_bind_group(2, light.get_bind_index());
         let main_model = Model3D::new(&default_shader, window);
-
+        
         // Dispatch watcher
-        let (rx, mut watcher) = watch(&path_with_respect_to_cwd_str(&model_path)).unwrap();
-        watcher.watch(&path_with_respect_to_cwd(&texture_path), RecursiveMode::Recursive).unwrap();
-
         Self {
-            watcher,
-            shader : default_shader,
-            shader_key : default_shader_key,
-            texture_path,
-            texture,
             main_mesh,
             main_model,
-            model_rx: rx,
-            model_path,
-            frame: 1.,
             camera,
             last_frame: SystemTime::now(),
             cam_controller: CameraController::new(),
@@ -184,34 +129,6 @@ impl ProspectApp for ObjPreviewer {
 
         let clear_colour = (0.5, 0.0, 0.5);
 
-        if let Ok(Some(val)) = self.model_rx.try_next()
-        {
-            match val
-            {
-                Ok(_) => {
-                    println!("Updating Mesh & Texture...");
-                    let texture = self.shader.register_texture(
-                        "texture",
-                        &read_file_with_respect_to_cwd_bytes(&self.texture_path),
-                        window,
-                    );
-                    self.texture = texture;
-
-                    let mut main_mesh = Mesh::from_shape(
-                        &to_shape(&read_file_with_respect_to_cwd(&self.model_path)),
-                        window.get_device(),
-                        &self.shader_key,
-                    );
-                    main_mesh.set_bind_group(1, &self.texture);
-                    main_mesh.set_bind_group(2, self.light.get_bind_index());
-                    self.main_mesh = main_mesh;
-                },
-                Err(a) => {
-                    println!("{:#?} twas error", a);
-                }
-            }
-        }
-
         /* draw */
         let (output, view, mut command_encoder) = HighLevelGraphicsContext::init_view(window);
         let mut render_pass = HighLevelGraphicsContext::start_render(
@@ -226,7 +143,6 @@ impl ProspectApp for ObjPreviewer {
 
         drop(render_pass);
 
-        self.frame += 1. / 60.;
         HighLevelGraphicsContext::finish_render(window, command_encoder, output);
         Ok(())
     }

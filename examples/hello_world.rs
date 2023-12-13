@@ -6,7 +6,7 @@ use vecto_rs::linear::{Vector, VectorTrait};
 use wgpu::SurfaceError;
 use winit::event::VirtualKeyCode;
 
-const TRIANGLE : ProspectShape<&[Vertex], &[u16]> = ProspectShape
+const TRIANGLE : ProspectShape<&[Vertex], &[u32]> = ProspectShape
 {
     vertices: &[
         Vertex { position : [  0.0,  0.5, 0.], uv : [0.5, 0.0], normal : [0.; 3] },

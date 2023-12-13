@@ -1,5 +1,5 @@
 use wgpu::{
-    BlendState, ColorTargetState, ColorWrites, Device, FragmentState, ShaderModule, VertexState, RenderPipeline, ShaderStages, TextureViewDimension, TextureSampleType, BindGroupLayout, BindGroup, Sampler, TextureView,
+    BlendState, ColorTargetState, ColorWrites, Device, FragmentState, ShaderModule, VertexState, RenderPipeline, ShaderStages, TextureViewDimension, TextureSampleType, BindGroupLayout, BindGroup, Sampler, TextureView, PrimitiveTopology,
 };
 
 use crate::{abstraction::{shader::ProspectShader, vertex::Vertex, high_level_abstraction::HighLevelGraphicsContext, prospect_window::ProspectWindow, graphics_context::GraphicsContext}, utils::prospect_fs::read_file_panic, prospect_shader_manager::ProspectBindGroupIndex, prospect_light::{LightUniform, ProspectPointLight}};
@@ -9,7 +9,8 @@ pub struct Default3D {
     color_target_state: Vec<Option<ColorTargetState>>,
     bind_layout : BindGroupLayout,
     sampler : Sampler,
-    matrix_bind_group_layout : BindGroupLayout
+    matrix_bind_group_layout : BindGroupLayout,
+    topology : PrimitiveTopology
 }
 
 impl ProspectShader for Default3D {
@@ -46,13 +47,23 @@ impl ProspectShader for Default3D {
         bind_groups.insert(1, &self.bind_layout);
         bind_groups.insert(3, &self.matrix_bind_group_layout);
 
-        HighLevelGraphicsContext::create_render_pipeline("Default 3D Shader Render Pipeline", device, self, Some(&bind_groups))
+        let mut state = GraphicsContext::DEFAULT_PRIMITIVE_STATE;
+        state.topology = self.topology;
+
+        HighLevelGraphicsContext::create_render_pipeline_with_primitive_state("Default 3D Shader Render Pipeline", device, self, Some(&bind_groups), state)
     }
 }
 
 impl Default3D {
-    pub fn new(
-        window : &ProspectWindow
+
+    pub fn new(window : &ProspectWindow) -> Self
+    {
+        Self::new_with_custom_topology(window, GraphicsContext::DEFAULT_PRIMITIVE_STATE.topology)
+    }
+
+    pub fn new_with_custom_topology(
+        window : &ProspectWindow,
+        topology : PrimitiveTopology
     ) -> Self {
         let surface = window.get_surface_config();
         let device = window.get_device();
@@ -80,6 +91,7 @@ impl Default3D {
                 blend: Some(BlendState::REPLACE),
                 write_mask: ColorWrites::ALL,
             })],
+            topology,
         }
     }
 

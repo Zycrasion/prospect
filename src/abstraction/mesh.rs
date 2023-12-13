@@ -28,7 +28,7 @@ impl Mesh
 {
     pub fn from_shape<T, U>(shape : &ProspectShape<T, U>, device : &Device, pipeline : &ProspectShaderIndex) -> Self
         where   T : Into<Vec<Vertex>> + Clone,
-                U : Into<Vec<u16>> + Clone
+                U : Into<Vec<u32>> + Clone
     {
         let vertices = shape.vertices.clone().into();
         assert!(vertices.len() != 0);
@@ -37,7 +37,7 @@ impl Mesh
         {
             // Auto Generate indices
             let mut v = vec![];
-            let l = vertices.len() as u16;
+            let l = vertices.len() as u32;
             for i in 0..l
             {
                 v.push(l - i - 1);
@@ -53,7 +53,7 @@ impl Mesh
 
     pub fn new<T, U>(vertices : T, indices : U, device : &Device, pipeline : &ProspectShaderIndex) -> Self 
         where   T : Into<Vec<Vertex>>,
-                U : Into<Vec<u16>>
+                U : Into<Vec<u32>>
     {
         let vertices = vertices.into();
         let indices = indices.into();
@@ -90,7 +90,7 @@ impl Meshable for Mesh
 
         cam.bind(render_pass, 0);
         render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-        render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);  
+        render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint32);  
         render_pass.draw_indexed(0..self.index_count, 0, 0..1); 
     }
 }

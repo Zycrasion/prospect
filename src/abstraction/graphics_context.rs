@@ -218,6 +218,46 @@ impl GraphicsContext {
         })
     }
 
+    pub const DEFAULT_PRIMITIVE_STATE : PrimitiveState = PrimitiveState {
+        topology: PrimitiveTopology::TriangleList,
+        strip_index_format: None,
+        front_face: FrontFace::Ccw,
+        cull_mode: Some(Face::Back),
+        polygon_mode: PolygonMode::Fill,
+        unclipped_depth: false,
+        conservative: false,
+    };
+
+    pub fn create_render_pipeline_with_primitive_state(
+        name: &str,
+        layout: &PipelineLayout,
+        fragment_state: FragmentState,
+        vertex_state: VertexState,
+        device: &Device,
+        primitive_state : PrimitiveState,
+    ) -> RenderPipeline {
+        device.create_render_pipeline(&RenderPipelineDescriptor {
+            label: Some(name),
+            layout: Some(layout),
+            vertex: vertex_state,
+            fragment: Some(fragment_state),
+            primitive: primitive_state,
+            depth_stencil: Some(DepthStencilState {
+                format: GraphicsContext::DEPTH_FORMAT,
+                depth_write_enabled: true,
+                depth_compare: CompareFunction::Less,
+                stencil: StencilState::default(),
+                bias: DepthBiasState::default(),
+            }),
+            multisample: MultisampleState {
+                count: 1,
+                mask: !0,
+                alpha_to_coverage_enabled: false,
+            },
+            multiview: None,
+        })
+    }
+
     pub fn create_buffer<A: NoUninit>(
         device: &Device,
         name: &str,
