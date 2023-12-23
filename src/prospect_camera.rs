@@ -39,11 +39,20 @@ impl CamUniform {
     }
 }
 
+pub enum ProjectionType
+{
+    /// fov
+    Perspective(f32),
+
+    /// right, left, top, bottom
+    Orthographic(f32, f32, f32, f32)
+}
+
 pub struct ProspectCamera {
     pub eye: Vector,
-    pub fov: f32,
     pub znear: f32,
     pub zfar: f32,
+    pub projection_type : ProjectionType,
     pub rotation : Vector,
     uniform : CamUniform,
     buffer : Buffer,
@@ -59,7 +68,7 @@ impl ProspectCamera {
 
         ProspectCamera {
             eye: Vector::new3(0., 0., 0.),
-            fov: 90.,
+            projection_type: ProjectionType::Perspective(90.),
             znear: 0.1,
             zfar: 100.,
             uniform : CamUniform::new(),
@@ -104,14 +113,32 @@ impl ProspectCamera {
 
     pub fn generate_projection_matrix(&self, width : f32, height : f32) -> Mat4
     {
-        let mut view = Mat4::identity();
-        view.rotate(-self.rotation.x, Vector::new3(1., 0., 0.));
-        view.rotate(-self.rotation.y, Vector::new3(0., 1., 0.));
-        view.rotate(-self.rotation.z, Vector::new3(0., 0., 1.));
-        view.translate(self.eye * -1.);
-        let projection = Mat4::new_perspective_matrix(width, height, self.fov, self.znear, self.zfar);
-        let cam_matrix = OPENGL_TO_WGPU_MATRIX * projection * view;
-        cam_matrix
+        match self.projection_type
+        {
+            ProjectionType::Perspective(fov) =>
+            {
+                let mut view = Mat4::identity();
+                view.rotate(-self.rotation.x, Vector::new3(1., 0., 0.));
+                view.rotate(-self.rotation.y, Vector::new3(0., 1., 0.));
+                view.rotate(-self.rotation.z, Vector::new3(0., 0., 1.));
+                view.translate(self.eye * -1.);
+                let projection = Mat4::new_perspective_matrix(width, height, fov, self.znear, self.zfar);
+                let cam_matrix = OPENGL_TO_WGPU_MATRIX * projection * view;
+                cam_matrix
+            },
+            ProjectionType::Orthographic(right, left, top, bottom) =>
+            {
+                let mut view = Mat4::identity();
+                view.rotate(-self.rotation.x, Vector::new3(1., 0., 0.));
+                view.rotate(-self.rotation.y, Vector::new3(0., 1., 0.));
+                view.rotate(-self.rotation.z, Vector::new3(0., 0., 1.));
+                view.translate(self.eye * -1.);
+                let projection = Mat4::new_orthographic_matrix(bottom, top, left, right, self.znear, self.zfar);
+                let cam_matrix = OPENGL_TO_WGPU_MATRIX * projection * view;
+                cam_matrix
+            }
+        }
+
     }
 
     fn create_uniform(buffer : &Buffer, device : &Device) -> (BindGroup, BindGroupLayout)
