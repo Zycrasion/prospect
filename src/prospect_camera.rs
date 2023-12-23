@@ -133,7 +133,7 @@ impl ProspectCamera {
                 view.rotate(-self.rotation.y, Vector::new3(0., 1., 0.));
                 view.rotate(-self.rotation.z, Vector::new3(0., 0., 1.));
                 view.translate(self.eye * -1.);
-                let projection = Mat4::new_orthographic_matrix(bottom, top, left, right, self.znear, self.zfar).transpose();
+                let projection = Mat4::new_orthographic_matrix(bottom, top, left, right, self.znear, self.zfar);
                 let cam_matrix = OPENGL_TO_WGPU_MATRIX * projection * view;
                 cam_matrix
             }
