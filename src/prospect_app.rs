@@ -1,7 +1,7 @@
 use vecto_rs::linear::Vector;
 use winit::event::{VirtualKeyCode, ElementState, MouseButton};
 
-use crate::{abstraction::prospect_window::ProspectWindow, prospect_camera::ProspectCamera};
+use crate::{abstraction::prospect_window::ProspectWindow};
 
 #[derive(Clone, Copy, PartialEq)]
 pub enum ProspectEvent
@@ -27,7 +27,7 @@ pub trait ProspectApp
     
     fn draw(&mut self, window : &mut ProspectWindow) -> Result<(), wgpu::SurfaceError>;
 
-    fn process(&mut self, _event : ProspectEvent, window : &mut ProspectWindow) -> ProcessResponse
+    fn process(&mut self, _event : ProspectEvent, _window : &mut ProspectWindow) -> ProcessResponse
     {
         ProcessResponse::ProspectProcess
     }

@@ -1,7 +1,7 @@
 use vecto_rs::{linear::*, trig::*};
-use wgpu::*;
 
-use crate::{prospect_shader_manager::ProspectBindGroupIndex, abstraction::{graphics_context::GraphicsContext, prospect_window::ProspectWindow, high_level_abstraction::HighLevelGraphicsContext}};
+
+
 
 #[repr(C)]
 #[derive(bytemuck::Zeroable, bytemuck::Pod, Clone, Copy, Debug, Default)]

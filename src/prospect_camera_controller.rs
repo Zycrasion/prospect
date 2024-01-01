@@ -1,7 +1,7 @@
-use std::{collections::{HashMap, HashSet}, env::consts::FAMILY};
+use std::{collections::{HashSet}};
 
-use vecto_rs::{linear::{Vector, VectorTrait, Mat4}, trig::to_radians};
-use winit::{event::{VirtualKeyCode, ElementState, MouseButton}, dpi::{PhysicalPosition, LogicalPosition}, window};
+use vecto_rs::{linear::{Vector, VectorTrait}, trig::to_radians};
+use winit::{event::{VirtualKeyCode, ElementState, MouseButton}, dpi::{LogicalPosition}};
 
 use crate::{prospect_camera::ProspectCamera, abstraction::prospect_window::ProspectWindow, prospect_app::ProspectEvent};
 

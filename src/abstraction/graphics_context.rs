@@ -1,6 +1,6 @@
 use bytemuck::NoUninit;
 
-use env_logger::filter::Filter;
+
 use wgpu::*;
 
 use wgpu::util::{BufferInitDescriptor, DeviceExt};

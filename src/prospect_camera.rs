@@ -3,7 +3,7 @@
 use vecto_rs::linear::{Vector, VectorTrait, Mat4};
 use wgpu::{Device, BufferUsages, ShaderStages, BindGroup, Buffer, RenderPass, BindGroupLayout, Queue};
 
-use crate::abstraction::{graphics_context::GraphicsContext, prospect_window::ProspectWindow};
+use crate::abstraction::{graphics_context::GraphicsContext};
 
 
 #[rustfmt::skip]

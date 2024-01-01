@@ -1,6 +1,6 @@
 use wgpu::*;
 
-use crate::{utils::prospect_fs::{read_file_panic, read_file_option}, abstraction::{high_level_abstraction::HighLevelGraphicsContext, prospect_window::ProspectWindow}};
+use crate::{utils::prospect_fs::{read_file_option}, abstraction::{high_level_abstraction::HighLevelGraphicsContext, prospect_window::ProspectWindow}};
 
 pub struct ProspectTexture
 {

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use wgpu::{RenderPipeline, RenderPass, Device, BindGroup, BindGroupLayout};
 
-use crate::abstraction::{shader::ProspectShader, prospect_window::ProspectWindow};
+use crate::abstraction::{shader::ProspectShader};
 
 #[derive(Clone, Debug, PartialEq, PartialOrd, Hash, Eq)]
 pub struct ProspectShaderIndex(String);

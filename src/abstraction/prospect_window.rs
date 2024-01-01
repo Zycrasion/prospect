@@ -1,7 +1,7 @@
 use std::time::{SystemTime, Duration};
 
-use crate::prospect_camera::{ProspectCamera, CamUniform};
-use crate::prospect_light::ProspectPointLight;
+use crate::prospect_camera::{ProspectCamera};
+
 use crate::{prospect_app::ProspectApp, prospect_shader_manager::ProspectBindGroupIndex};
 use crate::prospect_shader_manager::{ProspectShaderManager, ProspectShaderIndex};
 use crate::prospect_app::*;
@@ -10,7 +10,7 @@ use wgpu::{
    *
 };
 use winit::error::ExternalError;
-use winit::window::{CursorGrabMode, self};
+use winit::window::{CursorGrabMode};
 use winit::{
     dpi::PhysicalSize,
     event::{Event, VirtualKeyCode, WindowEvent, ElementState},
@@ -204,7 +204,7 @@ pub struct ProspectWindow {
                     }
                 }
             }
-            Event::DeviceEvent { device_id, event } =>
+            Event::DeviceEvent { device_id: _, event } =>
             {
                 match event
                 {
@@ -245,7 +245,7 @@ pub struct ProspectWindow {
                         *control_flow = flow;
                     }
                 }
-                WindowEvent::MouseInput { device_id, state, button, modifiers } =>
+                WindowEvent::MouseInput { device_id: _, state, button, modifiers: _ } =>
                 {
                     if let Some(flow) = self.process_input(
                         ProspectEvent::CursorClicked(*state, *button),
