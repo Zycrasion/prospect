@@ -58,6 +58,7 @@ impl Chunk {
                         j as f64 + y as f64 + 0.5,
                         k as f64 + z as f64 + 0.5,
                     ]);
+
                     blocks[index_into_block_array(i, j, k)] = if block > 0.5 { 1 } else { 0 };
                 }
             }

@@ -30,11 +30,11 @@ impl VoxelEngine
         let noise = Perlin::new(55);
         let mut chunks = vec![];
 
-        for x in -5..5
+        for x in -5..=5
         {
-            for y in -5..5
+            for y in -5..=5
             {
-                for z in -5..5
+                for z in -5..=5
                 {
                     chunks.push(Chunk::new(x as f32 * CHUNK_SIZE, y as f32 * CHUNK_SIZE, z as f32 * CHUNK_SIZE, noise, window, &shader_key, &shader, &light))
                 }
