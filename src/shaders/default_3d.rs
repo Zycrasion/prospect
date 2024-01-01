@@ -2,7 +2,7 @@ use wgpu::{
     BlendState, ColorTargetState, ColorWrites, Device, FragmentState, ShaderModule, VertexState, RenderPipeline, ShaderStages, TextureViewDimension, TextureSampleType, BindGroupLayout, BindGroup, Sampler, TextureView, PrimitiveTopology,
 };
 
-use crate::{abstraction::{shader::ProspectShader, vertex::Vertex, high_level_abstraction::HighLevelGraphicsContext, prospect_window::ProspectWindow, graphics_context::GraphicsContext}, utils::prospect_fs::read_file_panic, prospect_shader_manager::ProspectBindGroupIndex, prospect_light::{LightUniform, ProspectPointLight}};
+use crate::{abstraction::{shader::ProspectShader, vertex::Vertex, high_level_abstraction::HighLevelGraphicsContext, prospect_window::ProspectWindow, graphics_context::GraphicsContext}, utils::prospect_fs::read_file_panic, prospect_shader_manager::ProspectBindGroupIndex, prospect_light::{LightUniform, ProspectPointLight}, prospect_texture::ProspectTexture};
 
 pub struct Default3D {
     module: ShaderModule,
@@ -99,7 +99,7 @@ impl Default3D {
     {
         let view_resource = GraphicsContext::create_texture_view_resource(0, texture);
         let sampler_resource = GraphicsContext::create_sampler_resource(1, &self.sampler);
-        (2, GraphicsContext::create_bind_group(window.get_device(), name, &self.bind_layout, &vec![view_resource, sampler_resource]))
+        (2 /* I forgot what this number means but other things might depend on it */, GraphicsContext::create_bind_group(window.get_device(), name, &self.bind_layout, &vec![view_resource, sampler_resource]))
     }
 
     pub fn register_texture(&self, name: &str, bytes : &[u8], window: &mut ProspectWindow) -> ProspectBindGroupIndex
@@ -108,4 +108,10 @@ impl Default3D {
         let bind_group = self.create_texture(window, &texture_view, name);
         window.add_bind_group(name, bind_group.1)
     }
+
+    pub fn bind_prospect_texture(&self, prospect_texture : &ProspectTexture, window: &mut ProspectWindow) -> ProspectBindGroupIndex
+    {
+        let bind_group = self.create_texture(window, prospect_texture.get_texture_view(), &prospect_texture.get_name());
+        window.auto_add_bind_group(bind_group.1)
+    }  
 }

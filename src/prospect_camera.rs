@@ -1,4 +1,4 @@
-use std::f32::consts::PI;
+    use std::f32::consts::PI;
 
 use vecto_rs::linear::{Vector, VectorTrait, Mat4};
 use wgpu::{Device, BufferUsages, ShaderStages, BindGroup, Buffer, RenderPass, BindGroupLayout, Queue};
@@ -39,6 +39,7 @@ impl CamUniform {
     }
 }
 
+#[derive(Clone)]
 pub enum ProjectionType
 {
     /// fov
@@ -75,6 +76,24 @@ impl ProspectCamera {
             buffer,
             bind_group,
             rotation : Vector::new3(0., 0., 0.),
+            layout
+        }
+    }
+
+    pub fn new_from(device : &Device, camera : &ProspectCamera) -> ProspectCamera {
+        let uniform = CamUniform::new();
+        let buffer = GraphicsContext::create_buffer(&device, "Camera View Uniform Buffer", &[uniform], BufferUsages::UNIFORM | BufferUsages::COPY_DST);
+        let (bind_group, layout) = Self::create_uniform(&buffer, &device);
+
+        ProspectCamera {
+            eye: camera.eye,
+            projection_type: camera.projection_type.clone(),
+            znear: camera.znear,
+            zfar: camera.zfar,
+            rotation : camera.rotation,
+            uniform : CamUniform::new(),
+            buffer,
+            bind_group,
             layout
         }
     }

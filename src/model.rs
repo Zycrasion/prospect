@@ -25,4 +25,12 @@ impl Model3D
         render_pass.set_bind_group(3, &self.bind_group, &[]);
         mesh.draw(render_pass, window.get_shader_manager(), cam);
     }
+
+    pub fn draw_custom_bind_index<'a>(&'a self, render_pass : &mut RenderPass<'a>, window : &'a ProspectWindow, cam : &'a ProspectCamera, mesh : &'a Mesh, index : u32)
+    {
+        let data = self.transform.generate_matrix();
+        GraphicsContext::update_buffer(window.get_queue(), &self.matrix_buffer, 0, &[data]);
+        render_pass.set_bind_group(index, &self.bind_group, &[]);
+        mesh.draw(render_pass, window.get_shader_manager(), cam);
+    }
 }

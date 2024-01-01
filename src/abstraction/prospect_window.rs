@@ -1,3 +1,5 @@
+use std::time::{SystemTime, Duration};
+
 use crate::prospect_camera::{ProspectCamera, CamUniform};
 use crate::prospect_light::ProspectPointLight;
 use crate::{prospect_app::ProspectApp, prospect_shader_manager::ProspectBindGroupIndex};
@@ -32,9 +34,11 @@ pub struct ProspectWindow {
     depth_texture: (Texture, TextureView, Sampler),
     pub shader_manager: ProspectShaderManager,
     pub size: (u32, u32),
+    delta : f64,
+    last_frame : SystemTime,
 }
 
-impl ProspectWindow {
+ impl ProspectWindow {
     pub fn new<S: AsRef<str>>(
         title: S,
         width: u32,
@@ -56,8 +60,25 @@ impl ProspectWindow {
             config,
             size: (width, height),
             shader_manager,
-            depth_texture
+            depth_texture,
+            delta : 0.,
+            last_frame : SystemTime::now()
         }
+    }
+
+    pub fn get_delta(&self) -> f64
+    {
+        self.delta
+    }
+
+    pub fn get_deltaf32(&self) -> f32
+    {
+        self.delta as f32
+    }
+
+    pub fn get_deltaf64(&self) -> f64
+    {
+        self.delta
     }
 
     // pub fn bind_groups(&mut self) -> Vec<&BindGroupLayout>
@@ -168,10 +189,12 @@ impl ProspectWindow {
         let event_loop = event_loop.unwrap();
         app.setup(&mut self);
 
+        self.last_frame = SystemTime::now();
         event_loop.run(move |event, _, control_flow| match event {
             Event::RedrawRequested(window_id) => {
                 if window_id == self.window.id() {
-
+                    self.delta = SystemTime::now().duration_since(self.last_frame).ok().unwrap_or(Duration::from_secs_f32(1. / 60.)).as_secs_f64();
+                    self.last_frame = SystemTime::now();
                     let result = app.draw(&mut self);
                     match result {
                         Ok(_) => {}

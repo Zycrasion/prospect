@@ -1,13 +1,14 @@
 use std::path::Path;
 use std::time::{Duration, SystemTime};
 
-
-use noise::{Perlin, NoiseFn};
+use noise::{NoiseFn, Perlin};
+use prospect::abstraction::shader::ProspectShader;
 use prospect::parse_obj;
 use prospect::prospect_shader_manager::{ProspectBindGroupIndex, ProspectShaderIndex};
+use prospect::prospect_texture::ProspectTexture;
 use prospect::trig::to_radians;
-use prospect::utils::prospect_fs::{path_with_respect_to_cwd_str, path_with_respect_to_cwd};
-use prospect::wgpu::{SurfaceError, Texture, PrimitiveTopology};
+use prospect::utils::prospect_fs::{path_with_respect_to_cwd, path_with_respect_to_cwd_str};
+use prospect::wgpu::{PrimitiveTopology, SurfaceError, Texture};
 use prospect::winit::{
     event::{ElementState, MouseButton, VirtualKeyCode},
     window::CursorGrabMode,
@@ -36,56 +37,28 @@ use prospect::{
     linear::{Vector, VectorTrait},
     trig::to_degrees,
 };
-
-fn generate_height(x : f32, y : f32, perlin : Perlin, z : f32) -> f32
-{
-    perlin.get([x as f64 / 3., y as f64 / 3., z as f64]) as f32
-}
-
-fn generate_vertex(x : f32, z : f32, perlin : Perlin) -> Vertex
-{
-    let b = Vector::new3(x, generate_height(x, z, perlin, 0.), z);
-    let a = Vector::new3(x + 0.1, generate_height(x + 0.1, z, perlin, 0.), z);
-    let c = Vector::new3(x, generate_height(x, z + 0.1, perlin, 0.), z + 0.1);
-    
-    let ab = b - a;
-    let bc = c - b;
-
-    let normal = Vector::cross(&ab, &bc).normalized();
-
-    let y = generate_height(x, z, perlin, 0.);
-    let uv_x = 1. - (y / 2. + 0.5);
-    let uv_y_vary = perlin.get([x as f64 / 10., z as f64 / 10., 100.]) as f32;
-    let uv_y = 5. / 16. + uv_y_vary / 16.;
-
-    Vertex
-    {
-        position : [x, y, z],
-        uv : [uv_x, uv_y]  ,
-        normal : [normal.x, normal.y, normal.z]
-    }
-}
-
+use simple_terrain_gen::chunk::Chunk;
 
 fn main() {
     let mut window = ProspectWindow::new("Test Window", 480, 480);
-    let app = ObjPreviewer::new(&mut window);
+    let app = SimpleTerrainGen::new(&mut window);
     window.run_with_app(Box::new(app));
 }
 
-pub struct ObjPreviewer {
-    elapsed : f32,
-    main_model: Model3D,
-    main_mesh: Mesh,
+pub struct SimpleTerrainGen {
+    elapsed: f32,
     camera: ProspectCamera,
+    virtual_camera: ProspectCamera,
     cam_controller: CameraController,
     last_frame: SystemTime,
     light: ProspectPointLight,
-    light_mesh : Mesh,
-    light_model : Model3D
+    light_mesh: Mesh,
+    light_model: Model3D,
+    chunks: Vec<(Mesh, Model3D)>,
+    update_virtual_camera: bool,
 }
 
-impl ObjPreviewer {
+impl SimpleTerrainGen {
     fn new(window: &mut ProspectWindow) -> Self {
         let camera = ProspectCamera::new(window.get_device());
         let mut light = ProspectPointLight::new(window);
@@ -96,83 +69,87 @@ impl ObjPreviewer {
         let default_shader_key =
             window.add_shader(&default_shader, &camera, vec![light.get_layout()]);
 
-        let light_texture = default_shader.register_texture("Light Texture", include_bytes!("../res/light.png"), window);
-        let mut light_mesh = Mesh::from_shape(&to_shape(include_str!("../res/light.obj")), window.get_device(), &default_shader_key);
+        let light_texture = default_shader.register_texture(
+            "Light Texture",
+            include_bytes!("../res/light.png"),
+            window,
+        );
+        let mut light_mesh = Mesh::from_shape(
+            &to_shape(include_str!("../res/light.obj")),
+            window.get_device(),
+            &default_shader_key,
+        );
         light_mesh.set_bind_group(1, &light_texture);
         light_mesh.set_bind_group(2, light.get_bind_index());
 
         /* Terrain */
 
-        let terrain_shader = Default3D::new_with_custom_topology(&window, PrimitiveTopology::TriangleList);
+        let terrain_shader =
+            Default3D::new_with_custom_topology(&window, PrimitiveTopology::TriangleList);
         let terrain_shader_key =
             window.add_shader(&terrain_shader, &camera, vec![light.get_layout()]);
 
-        let pallete = terrain_shader.register_texture(
-            "texture",
-            include_bytes!("../res/pallete01.png"),
+        let pallete = ProspectTexture::from_bytes(
+            "Pallete Texture",
+            include_bytes!("../res/pallete.png"),
             window,
         );
+        let pallete_terrain_shader = terrain_shader.bind_prospect_texture(&pallete, window);
+        let light_model = Model3D::new(&terrain_shader, window);
 
-        let mut shape : ProspectShape<Vec<Vertex>, Vec<u32>> = ProspectShape { vertices: vec![], indices: Some(vec![]) };
+        let mut chunks = vec![];
 
-        let mut indices = vec![];
-        let size = 2u32.pow(11) + 2u32.pow(8);
-        let perlin = Perlin::new(0);
-
-        let mut vert_count = 0u32;
-        let mut face_count = 0u32;
-
-        for z in 0..size
-        {
-            for x in 0..size
-            {
-                shape.vertices.push(generate_vertex((x as f32 - size as f32 / 2.) / 4., (z as f32 - size as f32 / 2.) as f32 / 4., perlin));
-                vert_count += 1;
-                if x + 1 < size && z + 1 < size
-                {
-                    indices.push(z * size + x + 1);
-                    indices.push((z + 1) * size + x);
-                    indices.push(z * size + x);
-                    face_count += 1;
-
-                    indices.push((z + 1) * size + x + 1);
-                    indices.push((z + 1) * size + x);
-                    indices.push(z * size + x + 1);
-                    face_count += 1;
-                }
+        for x in -5..=5 {
+            for z in -5..=5 {
+                chunks.push(Self::new_chunk(
+                    x as f32 * 50. / 4.,
+                    z as f32 * 50. / 4.,
+                    window,
+                    terrain_shader_key.clone(),
+                    pallete_terrain_shader.clone(),
+                    &light,
+                    &terrain_shader,
+                ));
             }
         }
 
-        println!("verts : {vert_count} faces : {face_count} indices : {}", indices.len());
-        shape.indices = Some(indices);
-
-        let mut main_mesh = Mesh::from_shape(
-            &shape,
-            window.get_device(),
-            &terrain_shader_key,
-        );
-        main_mesh.set_bind_group(1, &pallete);
-        main_mesh.set_bind_group(2, light.get_bind_index());
-        let main_model = Model3D::new(&terrain_shader, window);
-
-        let light_model = Model3D::new(&terrain_shader, window);
-
-        // Dispatch watcher
         Self {
-            elapsed : 0.,
-            main_mesh,
-            main_model,
+            elapsed: 0.,
             light_mesh,
             light_model,
+            virtual_camera: ProspectCamera::new_from(window.get_device(), &camera),
             camera,
             last_frame: SystemTime::now(),
             cam_controller: CameraController::new(),
             light,
+            chunks,
+            update_virtual_camera: true,
         }
+    }
+
+    fn new_chunk(
+        x: f32,
+        z: f32,
+        window: &mut ProspectWindow,
+        terrain_shader_key: ProspectShaderIndex,
+        pallete_terrain_shader: ProspectBindGroupIndex,
+        light: &ProspectPointLight,
+        shader: &impl ProspectShader,
+    ) -> (Mesh, Model3D) {
+        let mut shape: ProspectShape<Vec<Vertex>, Vec<u32>> = Chunk::generate(x, z);
+
+        let mut main_mesh = Mesh::from_shape(&shape, window.get_device(), &terrain_shader_key);
+        main_mesh.set_bind_group(1, &pallete_terrain_shader);
+        main_mesh.set_bind_group(2, light.get_bind_index());
+
+        let mut model = Model3D::new(shader, window);
+        model.transform.position = Vector::new3(x, 0., z);
+
+        (main_mesh, model)
     }
 }
 
-impl ProspectApp for ObjPreviewer {
+impl ProspectApp for SimpleTerrainGen {
     fn setup(&mut self, window: &mut ProspectWindow) {}
 
     fn draw(&mut self, window: &mut ProspectWindow) -> Result<(), SurfaceError> {
@@ -192,6 +169,11 @@ impl ProspectApp for ObjPreviewer {
             window.get_queue(),
         );
 
+        if self.update_virtual_camera {
+            self.virtual_camera.eye = self.camera.eye;
+            self.virtual_camera.rotation = self.camera.rotation;
+        }
+
         let clear_colour = (0.5, 0.0, 0.5);
 
         self.light.position.x = to_radians(self.elapsed as f32 * 10.).sin() * 10.;
@@ -208,14 +190,36 @@ impl ProspectApp for ObjPreviewer {
             &mut command_encoder,
         );
 
-        self.light_model.draw(&mut render_pass, window, &self.camera, &self.light_mesh);
-        self.main_model
-            .draw(&mut render_pass, window, &self.camera, &self.main_mesh);
+        self.light_model
+            .draw(&mut render_pass, window, &self.camera, &self.light_mesh);
+
+        let mut marked_chunks = vec![];
+
+        {
+            let mut index = 0;
+            for chunk in &self.chunks {
+                if chunk.1.transform.position.dist(&self.virtual_camera.eye)
+                    <= self.virtual_camera.zfar
+                {
+                    chunk
+                        .1
+                        .draw(&mut render_pass, &window, &self.camera, &chunk.0);
+                    index += 1;
+                } else {
+                    marked_chunks.push(index);
+                }
+            }
+        }
 
         drop(render_pass);
 
         HighLevelGraphicsContext::finish_render(window, command_encoder, output);
         self.elapsed += delta;
+        
+        for chunk in marked_chunks {
+            self.chunks.remove(chunk);
+        }
+        
         Ok(())
     }
 
@@ -229,6 +233,18 @@ impl ProspectApp for ObjPreviewer {
                 if key.is_some() {
                     self.cam_controller
                         .key_pressed(key.expect("Unexpected None for CameraController"));
+                }
+
+                if key == Some(VirtualKeyCode::Z) {
+                    self.update_virtual_camera = !self.update_virtual_camera;
+                    println!(
+                        "{} Updating Virtual Camera!",
+                        if self.update_virtual_camera {
+                            "Started"
+                        } else {
+                            "Stopped"
+                        }
+                    );
                 }
 
                 if key == Some(VirtualKeyCode::Escape) {
@@ -267,16 +283,20 @@ impl ProspectApp for ObjPreviewer {
     }
 }
 
-fn to_shape(str : &str) -> ProspectShape<Vec<Vertex>, Vec<u32>>
-{
-
+fn to_shape(str: &str) -> ProspectShape<Vec<Vertex>, Vec<u32>> {
     let mut mesh = parse_obj(str);
     let verts = mesh.extract_vertices_and_uv_and_normals();
-    let mut shape : ProspectShape<Vec<Vertex>, Vec<u32>> = ProspectShape { vertices: Vec::new(), indices: None };
+    let mut shape: ProspectShape<Vec<Vertex>, Vec<u32>> = ProspectShape {
+        vertices: Vec::new(),
+        indices: None,
+    };
 
-    for vert in verts
-    {
-        shape.vertices.push(Vertex { position: [vert.0.x, vert.0.y, vert.0.z], uv: [vert.1.x, 1. - vert.1.y], normal : [vert.2.x, vert.2.y, vert.2.z] })
+    for vert in verts {
+        shape.vertices.push(Vertex {
+            position: [vert.0.x, vert.0.y, vert.0.z],
+            uv: [vert.1.x, 1. - vert.1.y],
+            normal: [vert.2.x, vert.2.y, vert.2.z],
+        })
     }
 
     shape

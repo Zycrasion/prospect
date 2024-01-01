@@ -9,7 +9,7 @@ pub mod prospect_camera_controller;
 pub mod prospect_light;
 pub mod prospect_transform;
 pub mod model;
-
+pub mod prospect_texture;
 
 // Re-exports
 pub use wgpu;

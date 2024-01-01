@@ -1,9 +1,9 @@
 use std::{collections::{HashMap, HashSet}, env::consts::FAMILY};
 
 use vecto_rs::{linear::{Vector, VectorTrait, Mat4}, trig::to_radians};
-use winit::{event::{VirtualKeyCode, ElementState}, dpi::{PhysicalPosition, LogicalPosition}, window};
+use winit::{event::{VirtualKeyCode, ElementState, MouseButton}, dpi::{PhysicalPosition, LogicalPosition}, window};
 
-use crate::{prospect_camera::ProspectCamera, abstraction::prospect_window::ProspectWindow};
+use crate::{prospect_camera::ProspectCamera, abstraction::prospect_window::ProspectWindow, prospect_app::ProspectEvent};
 
 pub struct CameraController
 {
@@ -77,7 +77,7 @@ impl CameraController
         }
 
         camera.rotation.y += to_radians(self.drag_amount.x) * 2.;
-        camera.rotation.x += to_radians(self.drag_amount.y);
+        camera.rotation.x += to_radians(self.drag_amount.y) * 2.;
         camera.rotation.x = camera.rotation.x.clamp(to_radians(-45.), to_radians(45.));
         self.drag_amount = Vector::default();
 
@@ -94,6 +94,32 @@ impl CameraController
             let _ = window.get_window().set_cursor_position(LogicalPosition::new(self.mouse_down_pos.x, self.mouse_down_pos.y));                
         }
         camera.eye += move_vector * delta;
+    }
+
+    pub fn input_event(&mut self, event : ProspectEvent, window : &mut ProspectWindow)
+    {
+        match event {
+            ProspectEvent::CursorClicked(state, MouseButton::Middle) =>
+            {
+                self.mouse_click_event(state, window);
+            }
+            ProspectEvent::CursorMoveEvent(pos) =>
+            {
+                self.mouse_move_event(pos, window);
+            }
+            ProspectEvent::CursorDelta(delta) =>
+            {
+                self.mouse_delta(delta)
+            },
+            ProspectEvent::KeyboardInput(Some(key), state) =>
+            {
+                match state {
+                    ElementState::Pressed => self.key_pressed(key),
+                    ElementState::Released => self.key_released(key)
+                }
+            }
+            _ => {}
+        }
     }
 
     pub fn mouse_click_event(&mut self, state : ElementState, window : &mut ProspectWindow)

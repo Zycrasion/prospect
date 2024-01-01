@@ -7,6 +7,13 @@ pub fn read_file<S : AsRef<str>>(path : S, default : S) -> String
     file
 }
 
+pub fn read_file_option<S : AsRef<str>>(path : S) -> Option<String>
+{
+    let file = fs::read_to_string(Path::new(path.as_ref()));
+    let file = if let Ok(cts) = file {Some(cts)} else {None};
+    file
+}
+
 pub fn read_file_panic<S : AsRef<str>>(path : S) -> String
 {
     let file = fs::read_to_string(Path::new(path.as_ref()));
