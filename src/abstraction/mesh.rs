@@ -31,7 +31,6 @@ impl Mesh
                 U : Into<Vec<u32>> + Clone
     {
         let vertices = shape.vertices.clone().into();
-        assert!(vertices.len() != 0);
 
         let indices = if shape.indices.is_none()
         {

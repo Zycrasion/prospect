@@ -28,7 +28,7 @@ impl CameraController
             current_mouse_pos : Vector::default(),
             drag_amount : Vector::default(),
             units_per_second : 3.,
-            sprint_multiplier : 5.
+            sprint_multiplier : 5.,
         }
     }
 

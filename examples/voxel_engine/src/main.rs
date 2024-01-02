@@ -1,6 +1,6 @@
 use noise::Perlin;
-use prospect::{prospect_app::{ProspectApp, ProspectEvent, ProcessResponse}, abstraction::{prospect_window::ProspectWindow, high_level_abstraction::HighLevelGraphicsContext, mesh::Meshable}, shaders::{default_3d::Default3D, textured_shader::TexturedShader}, prospect_light::ProspectPointLight};
-use voxel_engine::{chunk::{Chunk, CHUNK_SIZE}, player::Player, voxel_shader::VoxelShader};
+use prospect::{prospect_app::{ProspectApp, ProspectEvent, ProcessResponse}, abstraction::{prospect_window::ProspectWindow, high_level_abstraction::HighLevelGraphicsContext, mesh::Meshable}, shaders::{default_3d::Default3D, textured_shader::TexturedShader}, prospect_light::ProspectPointLight, prospect_texture::ProspectTexture, linear::{Vector, VectorTrait}};
+use voxel_engine::{chunk::{Chunk, CHUNK_SIZE, CHUNK_LWH}, player::Player, voxel_shader::VoxelShader};
 
 fn main() {
     let mut window = ProspectWindow::new("Voxel Engine", 720, 720);
@@ -19,13 +19,18 @@ impl VoxelEngine
 {
     pub fn new(window : &mut ProspectWindow) -> Self
     {
+
+        let mut block_atlas = ProspectTexture::from_bytes("BlockAtlas", include_bytes!("textures/block_atlas.png"), window);
+
         let player = Player::new(window);
 
-        let light = ProspectPointLight::new(window);
+        let mut light = ProspectPointLight::new(window);
+        light.position = Vector::new3(0., 10., 0.);
         light.process_frame(window);
 
         let shader = VoxelShader::new(&window);
         let shader_key = window.add_shader(&shader, player.get_camera(), vec![light.get_layout()]);
+        let index = shader.bind_prospect_texture(&block_atlas, window);
 
         let noise = Perlin::new(55);
         let mut chunks = vec![];
@@ -36,7 +41,7 @@ impl VoxelEngine
             {
                 for z in -5..=5
                 {
-                    chunks.push(Chunk::new(x as f32 * CHUNK_SIZE, y as f32 * CHUNK_SIZE, z as f32 * CHUNK_SIZE, noise, window, &shader_key, &shader, &light))
+                    chunks.push(Chunk::new(x as f32, y as f32, z as f32, noise, window, &shader_key, &shader, &light, &index))
                 }
             }
         }
@@ -66,6 +71,11 @@ impl ProspectApp for VoxelEngine
             window.get_depth_buffer(),
             &mut command_encoder,
         );
+
+        self.chunks.sort_by(|a, b|
+        {
+            return a.dist_from(self.player.get_camera()).total_cmp(&b.dist_from(self.player.get_camera()))
+        });
 
         for chunk in &self.chunks
         {

@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::{vec_extension::VecPushIndex, voxel_shader::VoxelShader};
 use noise::{NoiseFn, Perlin};
 use prospect::{
@@ -7,15 +9,28 @@ use prospect::{
         shader::ProspectShader,
         vertex::Vertex,
     },
+    linear::{Vector, VectorTrait},
     model::Model3D,
     prospect_camera::ProspectCamera,
     prospect_light::ProspectPointLight,
-    prospect_shader_manager::ProspectShaderIndex,
+    prospect_shader_manager::{ProspectBindGroupIndex, ProspectShaderIndex},
     prospect_shape::ProspectShape,
-    wgpu::RenderPass, linear::{Vector, VectorTrait},
+    wgpu::RenderPass,
 };
 
-pub const CHUNK_LWH: u32 = 16;
+pub const BLOCK_TYPES: &[(f32, f32, &str)] = &[
+    (0., 0., "air"),
+    (BLOCK_UV * 8., BLOCK_UV * 5., "dirt"),
+    (BLOCK_UV * 3., BLOCK_UV * 5., "cobblestone"),
+    (BLOCK_UV * 4., BLOCK_UV * 5., "mossy cobblestone"),
+    (0., BLOCK_UV * 12., "iron"),
+    (BLOCK_UV * 8., BLOCK_UV * 4., "diamond"),
+    (BLOCK_UV * 8., BLOCK_UV * 4., "diamond"),
+];
+pub const BLOCK_UV: f32 = 1. / 32.;
+pub const BLOCK_TYPES_SIZE : u8 = 6;
+
+pub const CHUNK_LWH: u32 = 32;
 pub const BLOCKS_PER_CHUNK: u32 = CHUNK_LWH * CHUNK_LWH * CHUNK_LWH;
 pub const VOXEL_SIZE: f32 = 0.5;
 pub const CHUNK_SIZE: f32 = VOXEL_SIZE as f32 * CHUNK_LWH as f32;
@@ -33,7 +48,7 @@ fn index_into_block_array(x: u32, y: u32, z: u32) -> usize {
 pub struct Chunk {
     mesh: Mesh,
     model: Model3D,
-    blocks: Box<[u8; BLOCKS_PER_CHUNK as usize]>,
+    // blocks: Box<[u8; BLOCKS_PER_CHUNK as usize]>,
 }
 
 impl Chunk {
@@ -47,24 +62,34 @@ impl Chunk {
         shader_key: &ProspectShaderIndex,
         shader: &impl ProspectShader,
         light: &ProspectPointLight,
+        texture: &ProspectBindGroupIndex,
     ) -> Self {
         let mut blocks = Box::new([0u8; BLOCKS_PER_CHUNK as usize]);
 
         for i in 0..CHUNK_LWH {
             for j in 0..CHUNK_LWH {
                 for k in 0..CHUNK_LWH {
-                    let block = noise.get([
-                        i as f64 + x as f64 + 0.5,
-                        j as f64 + y as f64 + 0.5,
-                        k as f64 + z as f64 + 0.5,
-                    ]);
+                    let x = x * CHUNK_LWH as f32;
+                    let y = y * CHUNK_LWH as f32;
+                    let z = z * CHUNK_LWH as f32;
+                    // let block = noise.get([
+                    //     (i as f64 + x as f64) / 30. + 0.5,
+                    //     // j as f64 + y as f64 + 0.5,
+                    //     (k as f64 + z as f64) / 30. + 0.5,
+                    // ]);
 
-                    blocks[index_into_block_array(i, j, k)] = if block > 0.5 { 1 } else { 0 };
+                    let block = noise.get([
+                        (i as f64 + x as f64) / 10. + 0.5,
+                        (j as f64 + y as f64) / 10. + 0.5,
+                        (k as f64 + z as f64) / 10. + 0.5,
+                    ]).abs() * BLOCK_TYPES_SIZE as f64;
+                    
+
+
+                    blocks[index_into_block_array(i, j, k)] = block.round() as u8;
                 }
             }
         }
-
-        blocks[index_into_block_array(5, 5, 5)] = 1;
 
         // Mesh Builder
         let mut vertices: Vec<Vertex> = vec![];
@@ -73,8 +98,8 @@ impl Chunk {
         for x in 0..CHUNK_LWH {
             for y in 0..CHUNK_LWH {
                 for z in 0..CHUNK_LWH {
-                    let block = get_block!(blocks, x, y, z);
-                    if block == 1 {
+                    let self_block = get_block!(blocks, x, y, z);
+                    if self_block != 0 {
                         // Building Faces
 
                         // Top
@@ -89,22 +114,34 @@ impl Chunk {
                             let z = z as f32 * VOXEL_SIZE;
                             let v1 = vertices.pushi(Vertex {
                                 position: [x, y + VOXEL_SIZE, z],
-                                uv: [0., 0.],
+                                uv: [
+                                    BLOCK_TYPES[self_block as usize].0,
+                                    BLOCK_TYPES[self_block as usize].1,
+                                ],
                                 normal: [0., 1., 0.],
                             });
                             let v2 = vertices.pushi(Vertex {
                                 position: [x + VOXEL_SIZE, y + VOXEL_SIZE, z],
-                                uv: [0., 1.],
+                                uv: [
+                                    BLOCK_TYPES[self_block as usize].0,
+                                    BLOCK_TYPES[self_block as usize].1 + BLOCK_UV,
+                                ],
                                 normal: [0., 1., 0.],
                             });
                             let v3 = vertices.pushi(Vertex {
                                 position: [x, y + VOXEL_SIZE, z + VOXEL_SIZE],
-                                uv: [0., 0.],
+                                uv: [
+                                    BLOCK_TYPES[self_block as usize].0 + BLOCK_UV,
+                                    BLOCK_TYPES[self_block as usize].1,
+                                ],
                                 normal: [0., 1., 0.],
                             });
                             let v4 = vertices.pushi(Vertex {
                                 position: [x + VOXEL_SIZE, y + VOXEL_SIZE, z + VOXEL_SIZE],
-                                uv: [0., 0.],
+                                uv: [
+                                    BLOCK_TYPES[self_block as usize].0 + BLOCK_UV,
+                                    BLOCK_TYPES[self_block as usize].1 + BLOCK_UV,
+                                ],
                                 normal: [0., 1., 0.],
                             });
 
@@ -128,22 +165,34 @@ impl Chunk {
                             let z = z as f32 * VOXEL_SIZE;
                             let v1 = vertices.pushi(Vertex {
                                 position: [x, y, z],
-                                uv: [0., 0.],
+                                uv: [
+                                    BLOCK_TYPES[self_block as usize].0,
+                                    BLOCK_TYPES[self_block as usize].1,
+                                ],
                                 normal: [0., -1., 0.],
                             });
                             let v2 = vertices.pushi(Vertex {
                                 position: [x + VOXEL_SIZE, y, z],
-                                uv: [0., 1.],
+                                uv: [
+                                    BLOCK_TYPES[self_block as usize].0 + BLOCK_UV,
+                                    BLOCK_TYPES[self_block as usize].1,
+                                ],
                                 normal: [0., -1., 0.],
                             });
                             let v3 = vertices.pushi(Vertex {
                                 position: [x, y, z + VOXEL_SIZE],
-                                uv: [0., 0.],
+                                uv: [
+                                    BLOCK_TYPES[self_block as usize].0,
+                                    BLOCK_TYPES[self_block as usize].1 + BLOCK_UV,
+                                ],
                                 normal: [0., -1., 0.],
                             });
                             let v4 = vertices.pushi(Vertex {
                                 position: [x + VOXEL_SIZE, y, z + VOXEL_SIZE],
-                                uv: [0., 0.],
+                                uv: [
+                                    BLOCK_TYPES[self_block as usize].0 + BLOCK_UV,
+                                    BLOCK_TYPES[self_block as usize].1 + BLOCK_UV,
+                                ],
                                 normal: [0., -1., 0.],
                             });
 
@@ -168,22 +217,34 @@ impl Chunk {
                             let z = z as f32 * VOXEL_SIZE;
                             let v1 = vertices.pushi(Vertex {
                                 position: [x, y, z],
-                                uv: [0., 0.],
+                                uv: [
+                                    BLOCK_TYPES[self_block as usize].0,
+                                    BLOCK_TYPES[self_block as usize].1 + BLOCK_UV,
+                                ],
                                 normal: [0., 0., -1.],
                             });
                             let v2 = vertices.pushi(Vertex {
                                 position: [x + VOXEL_SIZE, y, z],
-                                uv: [0., 1.],
+                                uv: [
+                                    BLOCK_TYPES[self_block as usize].0 + BLOCK_UV,
+                                    BLOCK_TYPES[self_block as usize].1 + BLOCK_UV,
+                                ],
                                 normal: [0., 0., -1.],
                             });
                             let v3 = vertices.pushi(Vertex {
                                 position: [x, y + VOXEL_SIZE, z],
-                                uv: [0., 0.],
+                                uv: [
+                                    BLOCK_TYPES[self_block as usize].0,
+                                    BLOCK_TYPES[self_block as usize].1,
+                                ],
                                 normal: [0., 0., -1.],
                             });
                             let v4 = vertices.pushi(Vertex {
                                 position: [x + VOXEL_SIZE, y + VOXEL_SIZE, z],
-                                uv: [0., 0.],
+                                uv: [
+                                    BLOCK_TYPES[self_block as usize].0 + BLOCK_UV,
+                                    BLOCK_TYPES[self_block as usize].1,
+                                ],
                                 normal: [0., 0., -1.],
                             });
 
@@ -207,22 +268,34 @@ impl Chunk {
                             let z = z as f32 * VOXEL_SIZE;
                             let v1 = vertices.pushi(Vertex {
                                 position: [x, y, z + VOXEL_SIZE],
-                                uv: [0., 0.],
+                                uv: [
+                                    BLOCK_TYPES[self_block as usize].0,
+                                    BLOCK_TYPES[self_block as usize].1,
+                                ],
                                 normal: [0., 0., 1.],
                             });
                             let v2 = vertices.pushi(Vertex {
                                 position: [x + VOXEL_SIZE, y, z + VOXEL_SIZE],
-                                uv: [0., 1.],
+                                uv: [
+                                    BLOCK_TYPES[self_block as usize].0 + BLOCK_UV,
+                                    BLOCK_TYPES[self_block as usize].1,
+                                ],
                                 normal: [0., 0., 1.],
                             });
                             let v3 = vertices.pushi(Vertex {
                                 position: [x, y + VOXEL_SIZE, z + VOXEL_SIZE],
-                                uv: [0., 0.],
+                                uv: [
+                                    BLOCK_TYPES[self_block as usize].0,
+                                    BLOCK_TYPES[self_block as usize].1 + BLOCK_UV,
+                                ],
                                 normal: [0., 0., 1.],
                             });
                             let v4 = vertices.pushi(Vertex {
                                 position: [x + VOXEL_SIZE, y + VOXEL_SIZE, z + VOXEL_SIZE],
-                                uv: [0., 0.],
+                                uv: [
+                                    BLOCK_TYPES[self_block as usize].0 + BLOCK_UV,
+                                    BLOCK_TYPES[self_block as usize].1 + BLOCK_UV,
+                                ],
                                 normal: [0., 0., 1.],
                             });
 
@@ -247,22 +320,34 @@ impl Chunk {
                             let z = z as f32 * VOXEL_SIZE;
                             let v1 = vertices.pushi(Vertex {
                                 position: [x, y, z],
-                                uv: [0., 0.],
+                                uv: [
+                                    BLOCK_TYPES[self_block as usize].0,
+                                    BLOCK_TYPES[self_block as usize].1 + BLOCK_UV,
+                                ],
                                 normal: [0., 0., -1.],
                             });
                             let v2 = vertices.pushi(Vertex {
                                 position: [x, y, z + VOXEL_SIZE],
-                                uv: [0., 1.],
+                                uv: [
+                                    BLOCK_TYPES[self_block as usize].0 + BLOCK_UV,
+                                    BLOCK_TYPES[self_block as usize].1 + BLOCK_UV,
+                                ],
                                 normal: [0., 0., -1.],
                             });
                             let v3 = vertices.pushi(Vertex {
                                 position: [x, y + VOXEL_SIZE, z],
-                                uv: [0., 0.],
+                                uv: [
+                                    BLOCK_TYPES[self_block as usize].0,
+                                    BLOCK_TYPES[self_block as usize].1,
+                                ],
                                 normal: [0., 0., -1.],
                             });
                             let v4 = vertices.pushi(Vertex {
                                 position: [x, y + VOXEL_SIZE, z + VOXEL_SIZE],
-                                uv: [0., 0.],
+                                uv: [
+                                    BLOCK_TYPES[self_block as usize].0 + BLOCK_UV,
+                                    BLOCK_TYPES[self_block as usize].1,
+                                ],
                                 normal: [0., 0., -1.],
                             });
 
@@ -286,22 +371,34 @@ impl Chunk {
                             let z = z as f32 * VOXEL_SIZE;
                             let v1 = vertices.pushi(Vertex {
                                 position: [x + VOXEL_SIZE, y, z],
-                                uv: [0., 0.],
+                                uv: [
+                                    BLOCK_TYPES[self_block as usize].0,
+                                    BLOCK_TYPES[self_block as usize].1 + BLOCK_UV,
+                                ],
                                 normal: [1., 0., 0.],
                             });
                             let v2 = vertices.pushi(Vertex {
                                 position: [x + VOXEL_SIZE, y + VOXEL_SIZE, z],
-                                uv: [0., 1.],
+                                uv: [
+                                    BLOCK_TYPES[self_block as usize].0 ,
+                                    BLOCK_TYPES[self_block as usize].1,
+                                ],
                                 normal: [1., 0., 0.],
                             });
                             let v3 = vertices.pushi(Vertex {
                                 position: [x + VOXEL_SIZE, y, z + VOXEL_SIZE],
-                                uv: [0., 0.],
+                                uv: [
+                                    BLOCK_TYPES[self_block as usize].0 + BLOCK_UV,
+                                    BLOCK_TYPES[self_block as usize].1 + BLOCK_UV,
+                                ],
                                 normal: [1., 0., 0.],
                             });
                             let v4 = vertices.pushi(Vertex {
                                 position: [x + VOXEL_SIZE, y + VOXEL_SIZE, z + VOXEL_SIZE],
-                                uv: [0., 0.],
+                                uv: [
+                                    BLOCK_TYPES[self_block as usize].0 + BLOCK_UV,
+                                    BLOCK_TYPES[self_block as usize].1,
+                                ],
                                 normal: [1., 0., 0.],
                             });
 
@@ -325,15 +422,20 @@ impl Chunk {
 
         let mut mesh = Mesh::from_shape(&shape, window.get_device(), shader_key);
         mesh.set_bind_group(1, light.get_bind_index());
+        mesh.set_bind_group(3, texture);
 
         let mut model = Model3D::new(shader, window);
-        model.transform.position = Vector::new3(x, y, z);
+        model.transform.position = Vector::new3(x * CHUNK_SIZE, y * CHUNK_SIZE, z * CHUNK_SIZE);
 
         Chunk {
-            blocks,
+            // blocks,
             mesh,
             model,
         }
+    }
+
+    pub fn dist_from(&self, cam: &ProspectCamera) -> f32 {
+        cam.eye.dist(&self.model.transform.position)
     }
 
     pub fn draw<'a>(
@@ -342,6 +444,9 @@ impl Chunk {
         window: &'a ProspectWindow,
         cam: &'a ProspectCamera,
     ) {
+        if self.model.transform.position.dist(&cam.eye) > cam.zfar / 1.5 {
+            return;
+        }
         self.model
             .draw_custom_bind_index(render_pass, window, cam, &self.mesh, 2);
     }

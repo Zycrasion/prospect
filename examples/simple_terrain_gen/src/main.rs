@@ -1,25 +1,20 @@
-use std::path::Path;
 use std::time::{Duration, SystemTime};
-
-use noise::{NoiseFn, Perlin};
 use prospect::abstraction::shader::ProspectShader;
 use prospect::parse_obj;
 use prospect::prospect_shader_manager::{ProspectBindGroupIndex, ProspectShaderIndex};
 use prospect::prospect_texture::ProspectTexture;
 use prospect::trig::to_radians;
-use prospect::utils::prospect_fs::{path_with_respect_to_cwd, path_with_respect_to_cwd_str};
-use prospect::wgpu::{PrimitiveTopology, SurfaceError, Texture};
+
+use prospect::wgpu::*;
 use prospect::winit::{
     event::{ElementState, MouseButton, VirtualKeyCode},
     window::CursorGrabMode,
 };
 use prospect::{
     abstraction::{
-        graphics_context::GraphicsContext,
         high_level_abstraction::HighLevelGraphicsContext,
-        mesh::{Mesh, Meshable},
+        mesh::Mesh,
         prospect_window::ProspectWindow,
-        shader::BasicShader,
         vertex::Vertex,
     },
     model::Model3D,
@@ -28,15 +23,11 @@ use prospect::{
     prospect_camera_controller::CameraController,
     prospect_light::ProspectPointLight,
     prospect_shape::ProspectShape,
-    shaders::{default_3d::Default3D, textured_shader::TexturedShader},
-    utils::prospect_fs::{
-        read_file_panic, read_file_with_respect_to_cwd, read_file_with_respect_to_cwd_bytes,
-    },
+    shaders::default_3d::Default3D,
 };
-use prospect::{
-    linear::{Vector, VectorTrait},
-    trig::to_degrees,
-};
+use prospect::
+    linear::{Vector, VectorTrait}
+;
 use simple_terrain_gen::chunk::Chunk;
 
 fn main() {
@@ -136,7 +127,7 @@ impl SimpleTerrainGen {
         light: &ProspectPointLight,
         shader: &impl ProspectShader,
     ) -> (Mesh, Model3D) {
-        let mut shape: ProspectShape<Vec<Vertex>, Vec<u32>> = Chunk::generate(x, z);
+        let shape: ProspectShape<Vec<Vertex>, Vec<u32>> = Chunk::generate(x, z);
 
         let mut main_mesh = Mesh::from_shape(&shape, window.get_device(), &terrain_shader_key);
         main_mesh.set_bind_group(1, &pallete_terrain_shader);
@@ -150,7 +141,7 @@ impl SimpleTerrainGen {
 }
 
 impl ProspectApp for SimpleTerrainGen {
-    fn setup(&mut self, window: &mut ProspectWindow) {}
+    fn setup(&mut self, _window: &mut ProspectWindow) {}
 
     fn draw(&mut self, window: &mut ProspectWindow) -> Result<(), SurfaceError> {
         /* update */
