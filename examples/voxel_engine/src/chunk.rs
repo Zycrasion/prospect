@@ -28,7 +28,7 @@ pub const BLOCK_TYPES: &[(f32, f32, &str)] = &[
     (BLOCK_UV * 8., BLOCK_UV * 4., "diamond"),
 ];
 pub const BLOCK_UV: f32 = 1. / 32.;
-pub const BLOCK_TYPES_SIZE : u8 = 6;
+pub const BLOCK_TYPES_SIZE: u8 = 6;
 
 pub const CHUNK_LWH: u32 = 32;
 pub const BLOCKS_PER_CHUNK: u32 = CHUNK_LWH * CHUNK_LWH * CHUNK_LWH;
@@ -45,25 +45,17 @@ fn index_into_block_array(x: u32, y: u32, z: u32) -> usize {
     (x + (y * CHUNK_LWH) + (z * CHUNK_LWH * CHUNK_LWH)) as usize
 }
 
-pub struct Chunk {
-    mesh: Mesh,
-    model: Model3D,
-    // blocks: Box<[u8; BLOCKS_PER_CHUNK as usize]>,
+pub struct ChunkData {
+    blocks: Box<[u8; BLOCKS_PER_CHUNK as usize]>,
+    vertices : Vec<Vertex>,
+    indices : Vec<u32>,
+    x : f32,
+    y : f32, 
+    z : f32,
 }
 
-impl Chunk {
-    /** Minimum Corner, not center */
-    pub fn new(
-        x: f32,
-        y: f32,
-        z: f32,
-        noise: Perlin,
-        window: &mut ProspectWindow,
-        shader_key: &ProspectShaderIndex,
-        shader: &impl ProspectShader,
-        light: &ProspectPointLight,
-        texture: &ProspectBindGroupIndex,
-    ) -> Self {
+impl ChunkData {
+    pub fn new(x: f32, y: f32, z: f32, noise: Perlin) -> Self {
         let mut blocks = Box::new([0u8; BLOCKS_PER_CHUNK as usize]);
 
         for i in 0..CHUNK_LWH {
@@ -78,20 +70,20 @@ impl Chunk {
                     //     (k as f64 + z as f64) / 30. + 0.5,
                     // ]);
 
-                    let block = noise.get([
-                        (i as f64 + x as f64) / 10. + 0.5,
-                        (j as f64 + y as f64) / 10. + 0.5,
-                        (k as f64 + z as f64) / 10. + 0.5,
-                    ]).abs() * BLOCK_TYPES_SIZE as f64;
-                    
-
+                    let block = noise
+                        .get([
+                            (i as f64 + x as f64) / 10. + 0.5,
+                            (j as f64 + y as f64) / 10. + 0.5,
+                            (k as f64 + z as f64) / 10. + 0.5,
+                        ])
+                        .abs()
+                        * BLOCK_TYPES_SIZE as f64;
 
                     blocks[index_into_block_array(i, j, k)] = block.round() as u8;
                 }
             }
         }
 
-        // Mesh Builder
         let mut vertices: Vec<Vertex> = vec![];
         let mut indices: Vec<u32> = vec![];
 
@@ -380,7 +372,7 @@ impl Chunk {
                             let v2 = vertices.pushi(Vertex {
                                 position: [x + VOXEL_SIZE, y + VOXEL_SIZE, z],
                                 uv: [
-                                    BLOCK_TYPES[self_block as usize].0 ,
+                                    BLOCK_TYPES[self_block as usize].0,
                                     BLOCK_TYPES[self_block as usize].1,
                                 ],
                                 normal: [1., 0., 0.],
@@ -415,6 +407,31 @@ impl Chunk {
             }
         }
 
+        ChunkData { blocks, x, y, z, vertices, indices }
+    }
+}
+
+pub struct Chunk {
+    mesh: Mesh,
+    model: Model3D,
+}
+
+impl Chunk {
+    /** Minimum Corner, not center */
+    pub fn new(
+        data : ChunkData,
+        window: &mut ProspectWindow,
+        shader_key: &ProspectShaderIndex,
+        shader: &impl ProspectShader,
+        light: &ProspectPointLight,
+        texture: &ProspectBindGroupIndex,
+    ) -> Self {
+        // Mesh Builder
+        let mut vertices: Vec<Vertex> = data.vertices;
+        let mut indices: Vec<u32> = data.indices;
+
+
+
         let shape = ProspectShape {
             vertices,
             indices: Some(indices),
@@ -425,7 +442,7 @@ impl Chunk {
         mesh.set_bind_group(3, texture);
 
         let mut model = Model3D::new(shader, window);
-        model.transform.position = Vector::new3(x * CHUNK_SIZE, y * CHUNK_SIZE, z * CHUNK_SIZE);
+        model.transform.position = Vector::new3(data.x * CHUNK_SIZE, data.y * CHUNK_SIZE, data.z * CHUNK_SIZE);
 
         Chunk {
             // blocks,
