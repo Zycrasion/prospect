@@ -57,7 +57,7 @@ impl VoxelEngine {
         let player = Player::new(window);
 
         let mut light = ProspectPointLight::new(window);
-        light.position = Vector::new3(0., 10., 0.);
+        light.position = Vector::new3(0., 0., 0.);
         light.process_frame(window);
 
         let shader = VoxelShader::new(&window);
@@ -109,29 +109,6 @@ impl VoxelEngine {
         let chunk_remove = self.chunk_remove.clone();
 
         thread::spawn(move || {
-            // let size_x = 1;
-            // let size_y = 1;
-            // let size_z = 1;
-
-            // let start_time = SystemTime::now();
-            // for x in (-size_x)..=size_x {
-            //     for y in (-size_y)..=size_y {
-            //         let mut buffer = vec![];
-            //         for z in (-size_z)..=size_z {
-            //             let data = ChunkData::new(x as f32, y as f32, z as f32, noise);
-            //             buffer.push(data);
-            //             // CHUNKS.push(Chunk::new(data, window, &shader_key, &shader, &light, &index))
-            //         }
-            //         chunk_data.lock().unwrap().append(&mut buffer);
-            //     }
-            // }
-            // let end_time = SystemTime::now();
-            // let duration = end_time.duration_since(start_time).unwrap();
-            // let seconds = duration.as_secs_f32();
-            // let blocks = (size_x * 2 + 1) * (size_y * 2 + 1) * (size_z * 2 + 1i32) * BLOCKS_PER_CHUNK as i32;
-            // println!("Time to Generate: {}", seconds);
-            // println!("Blocks Generated: {}", blocks);
-            // println!("Blocks/Second   : {}", blocks as f32 / seconds as f32);
             let mut built_chunks : Vec<ChunkEntry> = vec![];
             let mut explored_chunks : Vec<ChunkEntry> = vec![];
             
@@ -222,7 +199,6 @@ impl ProspectApp for VoxelEngine {
 
         if len > 0
         {
-            let time = SystemTime::now();
             while len > 0
             {
                 let first_chunk = self.chunk_data.lock().unwrap().remove(0);
@@ -235,7 +211,6 @@ impl ProspectApp for VoxelEngine {
 
         if len > 0
         {
-            println!("{:#?}", self.chunk_remove.lock().unwrap());
             while len > 0
             {
                 let first_chunk = self.chunk_remove.lock().unwrap().remove(0);

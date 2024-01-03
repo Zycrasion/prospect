@@ -26,13 +26,14 @@ pub const BLOCK_TYPES: &[(f32, f32, &str)] = &[
     (0., BLOCK_UV * 12., "iron"),
     (BLOCK_UV * 8., BLOCK_UV * 4., "diamond"),
     (BLOCK_UV * 8., BLOCK_UV * 4., "diamond"),
+    (BLOCK_UV * 1., BLOCK_UV * 10., "grass"),
 ];
 pub const BLOCK_UV: f32 = 1. / 32.;
 pub const BLOCK_TYPES_SIZE: u8 = 6;
 
 pub const CHUNK_LWH: u32 = 32;
 pub const BLOCKS_PER_CHUNK: u32 = CHUNK_LWH * CHUNK_LWH * CHUNK_LWH;
-pub const VOXEL_SIZE: f32 = 0.5;
+pub const VOXEL_SIZE: f32 = 1.;
 pub const CHUNK_SIZE: f32 = VOXEL_SIZE as f32 * CHUNK_LWH as f32;
 
 macro_rules! get_block {
@@ -56,10 +57,11 @@ fn generate(x : f32, y : f32, z : f32, i : i32, j : i32, k : i32, noise : Perlin
         (j as f64 + y as f64) / 10. + 0.5,
         (k as f64 + z as f64) / 10. + 0.5,
     ])
-    .abs()
     * BLOCK_TYPES_SIZE as f64;
 
-    block.floor() as u8
+    let block = block.floor() as u8;
+
+    block
 }
 
 #[derive(Hash, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Debug)]
@@ -113,7 +115,8 @@ impl ChunkData {
         for i in 0..CHUNK_LWH as i32 {
             for j in 0..CHUNK_LWH as i32 {
                 for k in 0..CHUNK_LWH as i32 {
-                    let self_block = get_block!(blocks, i, j, k);
+                    // This is so cursed
+                    let mut self_block = get_block!(blocks, i, j, k);
                     if self_block != 0 {
                         // Building Faces
 
@@ -124,38 +127,59 @@ impl ChunkData {
                             get_block!(blocks, i, j + 1, k)
                         };
                         if block == 0 {
+                            let u = if self_block == 1
+                            {
+                                4. * BLOCK_UV
+                            } else
+                            {
+                                BLOCK_TYPES[self_block as usize].0
+                            };
+
+                            let v = if self_block == 1
+                            {
+                                10. * BLOCK_UV
+                            } else
+                            {
+                                BLOCK_TYPES[self_block as usize].1
+                            };
+
+                            if self_block == 1
+                            {
+                                self_block = 7; // Grass
+                            }
+
                             let x = i as f32 * VOXEL_SIZE;
                             let y = j as f32 * VOXEL_SIZE;
                             let z = k as f32 * VOXEL_SIZE;
                             let v1 = vertices.pushi(Vertex {
                                 position: [x, y + VOXEL_SIZE, z],
                                 uv: [
-                                    BLOCK_TYPES[self_block as usize].0,
-                                    BLOCK_TYPES[self_block as usize].1,
+                                    u,
+                                    v,
                                 ],
                                 normal: [0., 1., 0.],
                             });
                             let v2 = vertices.pushi(Vertex {
                                 position: [x + VOXEL_SIZE, y + VOXEL_SIZE, z],
                                 uv: [
-                                    BLOCK_TYPES[self_block as usize].0,
-                                    BLOCK_TYPES[self_block as usize].1 + BLOCK_UV,
+                                    u,
+                                    v + BLOCK_UV,
                                 ],
                                 normal: [0., 1., 0.],
                             });
                             let v3 = vertices.pushi(Vertex {
                                 position: [x, y + VOXEL_SIZE, z + VOXEL_SIZE],
                                 uv: [
-                                    BLOCK_TYPES[self_block as usize].0 + BLOCK_UV,
-                                    BLOCK_TYPES[self_block as usize].1,
+                                    u + BLOCK_UV,
+                                    v,
                                 ],
                                 normal: [0., 1., 0.],
                             });
                             let v4 = vertices.pushi(Vertex {
                                 position: [x + VOXEL_SIZE, y + VOXEL_SIZE, z + VOXEL_SIZE],
                                 uv: [
-                                    BLOCK_TYPES[self_block as usize].0 + BLOCK_UV,
-                                    BLOCK_TYPES[self_block as usize].1 + BLOCK_UV,
+                                    u + BLOCK_UV,
+                                    v + BLOCK_UV,
                                 ],
                                 normal: [0., 1., 0.],
                             });
@@ -285,7 +309,7 @@ impl ChunkData {
                                 position: [x, y, z + VOXEL_SIZE],
                                 uv: [
                                     BLOCK_TYPES[self_block as usize].0,
-                                    BLOCK_TYPES[self_block as usize].1,
+                                    BLOCK_TYPES[self_block as usize].1 + BLOCK_UV,
                                 ],
                                 normal: [0., 0., 1.],
                             });
@@ -293,7 +317,7 @@ impl ChunkData {
                                 position: [x + VOXEL_SIZE, y, z + VOXEL_SIZE],
                                 uv: [
                                     BLOCK_TYPES[self_block as usize].0 + BLOCK_UV,
-                                    BLOCK_TYPES[self_block as usize].1,
+                                    BLOCK_TYPES[self_block as usize].1+ BLOCK_UV,
                                 ],
                                 normal: [0., 0., 1.],
                             });
@@ -301,7 +325,7 @@ impl ChunkData {
                                 position: [x, y + VOXEL_SIZE, z + VOXEL_SIZE],
                                 uv: [
                                     BLOCK_TYPES[self_block as usize].0,
-                                    BLOCK_TYPES[self_block as usize].1 + BLOCK_UV,
+                                    BLOCK_TYPES[self_block as usize].1,
                                 ],
                                 normal: [0., 0., 1.],
                             });
@@ -309,7 +333,7 @@ impl ChunkData {
                                 position: [x + VOXEL_SIZE, y + VOXEL_SIZE, z + VOXEL_SIZE],
                                 uv: [
                                     BLOCK_TYPES[self_block as usize].0 + BLOCK_UV,
-                                    BLOCK_TYPES[self_block as usize].1 + BLOCK_UV,
+                                    BLOCK_TYPES[self_block as usize].1 ,
                                 ],
                                 normal: [0., 0., 1.],
                             });

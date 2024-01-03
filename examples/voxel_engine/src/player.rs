@@ -1,6 +1,4 @@
-use std::f32::consts::E;
-
-use prospect::{prospect_camera::ProspectCamera, prospect_camera_controller::CameraController, abstraction::prospect_window::ProspectWindow, prospect_app::ProspectEvent, winit::window};
+use prospect::{prospect_camera::ProspectCamera, prospect_camera_controller::CameraController, abstraction::prospect_window::ProspectWindow, prospect_app::ProspectEvent, winit::window, linear::vector3};
 
 pub struct Player
 {
@@ -17,11 +15,10 @@ impl Player
 
         controller.sprint_multiplier = 50.;
 
-        camera.zfar = 1000.;
 
         Self
         {
-            camera: ProspectCamera::new(window.get_device()),
+            camera: camera,
             controller
         }
     }
@@ -34,7 +31,6 @@ impl Player
             window.size.1 as f32,
             window.get_queue(),
         );
-
     }
 
     pub fn process(&mut self, event : ProspectEvent, window : &mut ProspectWindow) {
