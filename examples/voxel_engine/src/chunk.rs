@@ -120,6 +120,58 @@ impl ChunkData {
                     if self_block != 0 {
                         // Building Faces
 
+                        // Bottom
+                        let block = if j == 0 {
+                            generate(x, y, z, i, j - 1, k, noise)
+                        } else {
+                            get_block!(blocks, i, j - 1, k)
+                        };
+                        if block == 0 {
+                            let x = i as f32 * VOXEL_SIZE;
+                            let y = j as f32 * VOXEL_SIZE;
+                            let z = k as f32 * VOXEL_SIZE;
+                            let v1 = vertices.pushi(Vertex {
+                                position: [x, y, z],
+                                uv: [
+                                    BLOCK_TYPES[self_block as usize].0,
+                                    BLOCK_TYPES[self_block as usize].1,
+                                ],
+                                normal: [0., -1., 0.],
+                            });
+                            let v2 = vertices.pushi(Vertex {
+                                position: [x + VOXEL_SIZE, y, z],
+                                uv: [
+                                    BLOCK_TYPES[self_block as usize].0 + BLOCK_UV,
+                                    BLOCK_TYPES[self_block as usize].1,
+                                ],
+                                normal: [0., -1., 0.],
+                            });
+                            let v3 = vertices.pushi(Vertex {
+                                position: [x, y, z + VOXEL_SIZE],
+                                uv: [
+                                    BLOCK_TYPES[self_block as usize].0,
+                                    BLOCK_TYPES[self_block as usize].1 + BLOCK_UV,
+                                ],
+                                normal: [0., -1., 0.],
+                            });
+                            let v4 = vertices.pushi(Vertex {
+                                position: [x + VOXEL_SIZE, y, z + VOXEL_SIZE],
+                                uv: [
+                                    BLOCK_TYPES[self_block as usize].0 + BLOCK_UV,
+                                    BLOCK_TYPES[self_block as usize].1 + BLOCK_UV,
+                                ],
+                                normal: [0., -1., 0.],
+                            });
+
+                            indices.push(v3 as u32);
+                            indices.push(v2 as u32);
+                            indices.push(v1 as u32);
+
+                            indices.push(v3 as u32);
+                            indices.push(v4 as u32);
+                            indices.push(v2 as u32);
+                        }
+
                         // Top
                         let block = if j + 1 == CHUNK_LWH as i32 {
                             generate(x, y, z, i, j + 1, k, noise)
@@ -192,57 +244,7 @@ impl ChunkData {
                             indices.push(v2 as u32);
                             indices.push(v4 as u32);
                         }
-                        // Bottom
-                        let block = if j == 0 {
-                            generate(x, y, z, i, j - 1, k, noise)
-                        } else {
-                            get_block!(blocks, i, j - 1, k)
-                        };
-                        if block == 0 {
-                            let x = i as f32 * VOXEL_SIZE;
-                            let y = j as f32 * VOXEL_SIZE;
-                            let z = k as f32 * VOXEL_SIZE;
-                            let v1 = vertices.pushi(Vertex {
-                                position: [x, y, z],
-                                uv: [
-                                    BLOCK_TYPES[self_block as usize].0,
-                                    BLOCK_TYPES[self_block as usize].1,
-                                ],
-                                normal: [0., -1., 0.],
-                            });
-                            let v2 = vertices.pushi(Vertex {
-                                position: [x + VOXEL_SIZE, y, z],
-                                uv: [
-                                    BLOCK_TYPES[self_block as usize].0 + BLOCK_UV,
-                                    BLOCK_TYPES[self_block as usize].1,
-                                ],
-                                normal: [0., -1., 0.],
-                            });
-                            let v3 = vertices.pushi(Vertex {
-                                position: [x, y, z + VOXEL_SIZE],
-                                uv: [
-                                    BLOCK_TYPES[self_block as usize].0,
-                                    BLOCK_TYPES[self_block as usize].1 + BLOCK_UV,
-                                ],
-                                normal: [0., -1., 0.],
-                            });
-                            let v4 = vertices.pushi(Vertex {
-                                position: [x + VOXEL_SIZE, y, z + VOXEL_SIZE],
-                                uv: [
-                                    BLOCK_TYPES[self_block as usize].0 + BLOCK_UV,
-                                    BLOCK_TYPES[self_block as usize].1 + BLOCK_UV,
-                                ],
-                                normal: [0., -1., 0.],
-                            });
-
-                            indices.push(v3 as u32);
-                            indices.push(v2 as u32);
-                            indices.push(v1 as u32);
-
-                            indices.push(v3 as u32);
-                            indices.push(v4 as u32);
-                            indices.push(v2 as u32);
-                        }
+                        
 
                         // Back
                         let block = if k == 0 {
