@@ -15,7 +15,7 @@ impl Player
         let mut controller = CameraController::new();
         let mut camera = ProspectCamera::new(window.get_device());
 
-        controller.sprint_multiplier = 5.;
+        controller.sprint_multiplier = 50.;
 
         camera.zfar = 1000.;
 

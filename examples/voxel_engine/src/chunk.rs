@@ -9,7 +9,7 @@ use prospect::{
         shader::ProspectShader,
         vertex::Vertex,
     },
-    linear::{Vector, VectorTrait},
+    linear::{Vector, VectorTrait, vector3},
     model::Model3D,
     prospect_camera::ProspectCamera,
     prospect_light::ProspectPointLight,
@@ -41,45 +41,68 @@ macro_rules! get_block {
     };
 }
 
-fn index_into_block_array(x: u32, y: u32, z: u32) -> usize {
-    (x + (y * CHUNK_LWH) + (z * CHUNK_LWH * CHUNK_LWH)) as usize
+fn index_into_block_array(x: i32, y: i32, z: i32) -> usize {
+    (x + (y * CHUNK_LWH as i32) + (z * CHUNK_LWH as i32 * CHUNK_LWH as i32)) as usize
+}
+
+fn generate(x : f32, y : f32, z : f32, i : i32, j : i32, k : i32, noise : Perlin) -> u8
+{
+    let x = x * CHUNK_LWH as f32;
+    let y = y * CHUNK_LWH as f32;
+    let z = z * CHUNK_LWH as f32;
+    let block = noise
+    .get([
+        (i as f64 + x as f64) / 10. + 0.5,
+        (j as f64 + y as f64) / 10. + 0.5,
+        (k as f64 + z as f64) / 10. + 0.5,
+    ])
+    .abs()
+    * BLOCK_TYPES_SIZE as f64;
+
+    block.floor() as u8
+}
+
+#[derive(Hash, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Debug)]
+pub struct ChunkEntry
+{
+    x : i32,
+    y : i32,
+    z : i32
+}
+
+pub fn from_vector(vec : Vector) -> ChunkEntry
+{
+    return ChunkEntry
+    {
+        x : vec.x.floor() as i32,
+        y : vec.y.floor() as i32,
+        z : vec.z.floor() as i32
+    }
+}
+
+pub fn to_vector(vec : ChunkEntry) -> Vector
+{
+    return vector3(vec.x as f32, vec.y as f32, vec.z as f32)
 }
 
 pub struct ChunkData {
-    blocks: Box<[u8; BLOCKS_PER_CHUNK as usize]>,
+    // blocks: Box<[u8; BLOCKS_PER_CHUNK as usize]>,
     vertices : Vec<Vertex>,
     indices : Vec<u32>,
     x : f32,
     y : f32, 
     z : f32,
+    pub entry : ChunkEntry
 }
 
 impl ChunkData {
     pub fn new(x: f32, y: f32, z: f32, noise: Perlin) -> Self {
         let mut blocks = Box::new([0u8; BLOCKS_PER_CHUNK as usize]);
 
-        for i in 0..CHUNK_LWH {
-            for j in 0..CHUNK_LWH {
-                for k in 0..CHUNK_LWH {
-                    let x = x * CHUNK_LWH as f32;
-                    let y = y * CHUNK_LWH as f32;
-                    let z = z * CHUNK_LWH as f32;
-                    // let block = noise.get([
-                    //     (i as f64 + x as f64) / 30. + 0.5,
-                    //     // j as f64 + y as f64 + 0.5,
-                    //     (k as f64 + z as f64) / 30. + 0.5,
-                    // ]);
-
-                    let block = noise
-                        .get([
-                            (i as f64 + x as f64) / 10. + 0.5,
-                            (j as f64 + y as f64) / 10. + 0.5,
-                            (k as f64 + z as f64) / 10. + 0.5,
-                        ])
-                        .abs()
-                        * BLOCK_TYPES_SIZE as f64;
-
-                    blocks[index_into_block_array(i, j, k)] = block.round() as u8;
+        for i in 0..CHUNK_LWH as i32 {
+            for j in 0..CHUNK_LWH as i32 {
+                for k in 0..CHUNK_LWH as i32 {
+                    blocks[index_into_block_array(i, j, k)] = generate(x, y, z, i, j, k, noise);
                 }
             }
         }
@@ -87,23 +110,23 @@ impl ChunkData {
         let mut vertices: Vec<Vertex> = vec![];
         let mut indices: Vec<u32> = vec![];
 
-        for x in 0..CHUNK_LWH {
-            for y in 0..CHUNK_LWH {
-                for z in 0..CHUNK_LWH {
-                    let self_block = get_block!(blocks, x, y, z);
+        for i in 0..CHUNK_LWH as i32 {
+            for j in 0..CHUNK_LWH as i32 {
+                for k in 0..CHUNK_LWH as i32 {
+                    let self_block = get_block!(blocks, i, j, k);
                     if self_block != 0 {
                         // Building Faces
 
                         // Top
-                        let block = if y + 1 == CHUNK_LWH {
-                            0
+                        let block = if j + 1 == CHUNK_LWH as i32 {
+                            generate(x, y, z, i, j + 1, k, noise)
                         } else {
-                            get_block!(blocks, x, y + 1, z)
+                            get_block!(blocks, i, j + 1, k)
                         };
                         if block == 0 {
-                            let x = x as f32 * VOXEL_SIZE;
-                            let y = y as f32 * VOXEL_SIZE;
-                            let z = z as f32 * VOXEL_SIZE;
+                            let x = i as f32 * VOXEL_SIZE;
+                            let y = j as f32 * VOXEL_SIZE;
+                            let z = k as f32 * VOXEL_SIZE;
                             let v1 = vertices.pushi(Vertex {
                                 position: [x, y + VOXEL_SIZE, z],
                                 uv: [
@@ -146,15 +169,15 @@ impl ChunkData {
                             indices.push(v4 as u32);
                         }
                         // Bottom
-                        let block = if y == 0 {
-                            0
+                        let block = if j == 0 {
+                            generate(x, y, z, i, j - 1, k, noise)
                         } else {
-                            get_block!(blocks, x, y - 1, z)
+                            get_block!(blocks, i, j - 1, k)
                         };
                         if block == 0 {
-                            let x = x as f32 * VOXEL_SIZE;
-                            let y = y as f32 * VOXEL_SIZE;
-                            let z = z as f32 * VOXEL_SIZE;
+                            let x = i as f32 * VOXEL_SIZE;
+                            let y = j as f32 * VOXEL_SIZE;
+                            let z = k as f32 * VOXEL_SIZE;
                             let v1 = vertices.pushi(Vertex {
                                 position: [x, y, z],
                                 uv: [
@@ -198,15 +221,15 @@ impl ChunkData {
                         }
 
                         // Back
-                        let block = if z == 0 {
-                            0
+                        let block = if k == 0 {
+                            generate(x, y, z, i, j, k - 1, noise)
                         } else {
-                            get_block!(blocks, x, y, z - 1)
+                            get_block!(blocks, i, j, k - 1)
                         };
                         if block == 0 {
-                            let x = x as f32 * VOXEL_SIZE;
-                            let y = y as f32 * VOXEL_SIZE;
-                            let z = z as f32 * VOXEL_SIZE;
+                            let x = i as f32 * VOXEL_SIZE;
+                            let y = j as f32 * VOXEL_SIZE;
+                            let z = k as f32 * VOXEL_SIZE;
                             let v1 = vertices.pushi(Vertex {
                                 position: [x, y, z],
                                 uv: [
@@ -249,15 +272,15 @@ impl ChunkData {
                             indices.push(v4 as u32);
                         }
                         // Front
-                        let block = if z == CHUNK_LWH - 1 {
-                            0
+                        let block = if k == CHUNK_LWH as i32 - 1 {
+                            generate(x, y, z, i, j, k + 1, noise)
                         } else {
-                            get_block!(blocks, x, y, z + 1)
+                            get_block!(blocks, i, j, k + 1)
                         };
                         if block == 0 {
-                            let x = x as f32 * VOXEL_SIZE;
-                            let y = y as f32 * VOXEL_SIZE;
-                            let z = z as f32 * VOXEL_SIZE;
+                            let x = i as f32 * VOXEL_SIZE;
+                            let y = j as f32 * VOXEL_SIZE;
+                            let z = k as f32 * VOXEL_SIZE;
                             let v1 = vertices.pushi(Vertex {
                                 position: [x, y, z + VOXEL_SIZE],
                                 uv: [
@@ -301,15 +324,15 @@ impl ChunkData {
                         }
 
                         // Left
-                        let block = if x == 0 {
-                            0
+                        let block = if i == 0 {
+                            generate(x, y, z, i - 1, j, k, noise)
                         } else {
-                            get_block!(blocks, x - 1, y, z)
+                            get_block!(blocks, i - 1, j, k)
                         };
                         if block == 0 {
-                            let x = x as f32 * VOXEL_SIZE;
-                            let y = y as f32 * VOXEL_SIZE;
-                            let z = z as f32 * VOXEL_SIZE;
+                            let x = i as f32 * VOXEL_SIZE;
+                            let y = j as f32 * VOXEL_SIZE;
+                            let z = k as f32 * VOXEL_SIZE;
                             let v1 = vertices.pushi(Vertex {
                                 position: [x, y, z],
                                 uv: [
@@ -352,15 +375,15 @@ impl ChunkData {
                             indices.push(v2 as u32);
                         }
                         // Right
-                        let block = if x == CHUNK_LWH - 1 {
-                            0
+                        let block = if i == CHUNK_LWH as i32 - 1 {
+                            generate(x, y, z, i + 1, j, k, noise)
                         } else {
-                            get_block!(blocks, x + 1, y, z)
+                            get_block!(blocks, i + 1, j, k)
                         };
                         if block == 0 {
-                            let x = x as f32 * VOXEL_SIZE;
-                            let y = y as f32 * VOXEL_SIZE;
-                            let z = z as f32 * VOXEL_SIZE;
+                            let x = i as f32 * VOXEL_SIZE;
+                            let y = j as f32 * VOXEL_SIZE;
+                            let z = k as f32 * VOXEL_SIZE;
                             let v1 = vertices.pushi(Vertex {
                                 position: [x + VOXEL_SIZE, y, z],
                                 uv: [
@@ -407,7 +430,7 @@ impl ChunkData {
             }
         }
 
-        ChunkData { blocks, x, y, z, vertices, indices }
+        ChunkData { x, y, z, vertices, indices, entry: from_vector(vector3(x, y, z)) }
     }
 }
 
@@ -451,8 +474,8 @@ impl Chunk {
         }
     }
 
-    pub fn dist_from(&self, cam: &ProspectCamera) -> f32 {
-        cam.eye.dist(&self.model.transform.position)
+    pub fn dist_from(&self, eye: Vector) -> f32 {
+        eye.dist(&self.model.transform.position)
     }
 
     pub fn draw<'a>(
