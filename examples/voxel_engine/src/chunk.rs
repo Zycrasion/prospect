@@ -13,9 +13,8 @@ use prospect::{
     model::Model3D,
     prospect_camera::ProspectCamera,
     prospect_light::ProspectPointLight,
-    prospect_shader_manager::{ProspectBindGroupIndex, ProspectShaderIndex},
     prospect_shape::ProspectShape,
-    wgpu::RenderPass,
+    wgpu::RenderPass, smart::{SmartRenderPipeline, SmartBindGroup},
 };
 
 pub const BLOCK_TYPES: &[(f32, f32, &str)] = &[
@@ -470,10 +469,10 @@ impl Chunk {
     pub fn new(
         data : ChunkData,
         window: &mut ProspectWindow,
-        shader_key: &ProspectShaderIndex,
+        shader_key: &SmartRenderPipeline,
         shader: &impl ProspectShader,
         light: &ProspectPointLight,
-        texture: &ProspectBindGroupIndex,
+        texture: &SmartBindGroup,
     ) -> Self {
         // Mesh Builder
         let mut vertices: Vec<Vertex> = data.vertices;
@@ -487,7 +486,7 @@ impl Chunk {
         };
 
         let mut mesh = Mesh::from_shape(&shape, window.get_device(), shader_key);
-        mesh.set_bind_group(1, light.get_bind_index());
+        mesh.set_bind_group(1, &light.get_bind_group());
         mesh.set_bind_group(3, texture);
 
         let mut model = Model3D::new(shader, window);

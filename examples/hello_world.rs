@@ -1,5 +1,5 @@
 use prospect::{
-    abstraction::{prospect_window::ProspectWindow, high_level_abstraction::HighLevelGraphicsContext, mesh::{Mesh, Meshable}, shader::BasicShader, vertex::Vertex},
+    abstraction::{prospect_window::ProspectWindow, high_level_abstraction::HighLevelGraphicsContext, mesh::{Mesh, Meshable}, shader::{BasicShader, ProspectShader}, vertex::Vertex},
     prospect_app::{ProcessResponse, ProspectApp, ProspectEvent}, prospect_shape::ProspectShape, prospect_camera::ProspectCamera,
 };
 use vecto_rs::linear::{Vector, VectorTrait};
@@ -37,7 +37,7 @@ impl HelloWorld
         let basic_shader = BasicShader::new(window);
         let mut camera = ProspectCamera::new(window.get_device());
         camera.eye = Vector::new3(0., 0., -1.);
-        let basic_shader = window.add_shader(&basic_shader, &camera, vec![]);
+        let basic_shader = basic_shader.build_render_pipeline(window.get_device(), vec![camera.get_layout()]).into();
 
         let mesh = Mesh::from_shape(&TRIANGLE, window.get_device(), &basic_shader);
 
@@ -60,7 +60,7 @@ impl ProspectApp for HelloWorld {
         let mut render_pass = HighLevelGraphicsContext::start_render(clear_colour, &view, window.get_depth_buffer(), &mut command_encoder);
 
         self.camera.process_frame(window.size.0 as f32, window.size.1 as f32, window.get_queue());
-        self.mesh.draw(&mut render_pass, window.get_shader_manager(), &self.camera);
+        self.mesh.draw(&mut render_pass, &self.camera);
 
         drop(render_pass);
 

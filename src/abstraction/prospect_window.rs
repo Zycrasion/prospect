@@ -1,7 +1,6 @@
 use std::time::{SystemTime, Duration};
 use crate::prospect_camera::ProspectCamera;
-use crate::{prospect_app::ProspectApp, prospect_shader_manager::ProspectBindGroupIndex};
-use crate::prospect_shader_manager::{ProspectShaderManager, ProspectShaderIndex};
+use crate::prospect_app::ProspectApp;
 use crate::prospect_app::*;
 use vecto_rs::linear::{Vector, VectorTrait};
 use wgpu::{
@@ -30,7 +29,6 @@ pub struct ProspectWindow {
     queue: Queue,
     config: SurfaceConfiguration,
     depth_texture: (Texture, TextureView, Sampler),
-    pub shader_manager: ProspectShaderManager,
     pub size: (u32, u32),
     delta : f64,
     last_frame : SystemTime,
@@ -45,8 +43,6 @@ pub struct ProspectWindow {
         let (event_loop, window, surface, device, queue, config) =
             pollster::block_on(HighLevelGraphicsContext::init_window(title, width, height));
 
-        let shader_manager = ProspectShaderManager::new();
-
         let depth_texture = GraphicsContext::create_depth_texture(&device, &config, "Depth Texture");
 
         Self {
@@ -57,7 +53,6 @@ pub struct ProspectWindow {
             queue,
             config,
             size: (width, height),
-            shader_manager,
             depth_texture,
             delta : 0.,
             last_frame : SystemTime::now(),
@@ -94,11 +89,6 @@ pub struct ProspectWindow {
         &self.depth_texture.1
     }
 
-    pub fn get_shader_manager(&self) -> &ProspectShaderManager
-    {
-        &self.shader_manager
-    }
-
     pub fn get_surface_config(&self) -> &SurfaceConfiguration
     {
         &self.config
@@ -114,24 +104,6 @@ pub struct ProspectWindow {
 
     pub fn get_queue(&self) -> &Queue {
         &self.queue
-    }
-
-    pub fn add_shader(&mut self, shader : &impl ProspectShader, camera : &ProspectCamera, uniforms : Vec<&BindGroupLayout>) -> ProspectShaderIndex
-    {
-        let mut a = uniforms.clone();
-        a.insert(0, camera.get_layout());
-
-        self.shader_manager.add_shader(shader, &self.device, a)
-    }
-
-    pub fn add_bind_group<S : AsRef<str>>(&mut self, name : S,  bind_group : BindGroup) -> ProspectBindGroupIndex
-    {
-        self.shader_manager.add_bind_group(name, bind_group)
-    }
-
-    pub fn auto_add_bind_group(&mut self, bind_group : BindGroup) -> ProspectBindGroupIndex
-    {
-        self.shader_manager.auto_add_bind_group(bind_group)
     }
 
     pub fn get_window(&mut self) -> &mut Window

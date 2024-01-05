@@ -1,8 +1,8 @@
 use std::time::{Duration, SystemTime};
 use prospect::abstraction::shader::ProspectShader;
 use prospect::parse_obj;
-use prospect::prospect_shader_manager::{ProspectBindGroupIndex, ProspectShaderIndex};
 use prospect::prospect_texture::ProspectTexture;
+use prospect::smart::{SmartRenderPipeline, SmartBindGroup};
 use prospect::trig::to_radians;
 
 use prospect::wgpu::*;
@@ -57,8 +57,7 @@ impl SimpleTerrainGen {
         light.colour = Vector::new3(1., 1., 1.);
 
         let default_shader = Default3D::new(&window);
-        let default_shader_key =
-            window.add_shader(&default_shader, &camera, vec![light.get_layout()]);
+        let default_shader_key = default_shader.build_render_pipeline(window.get_device(), vec![camera.get_layout(), light.get_layout()]).into();
 
         let light_texture = default_shader.register_texture(
             "Light Texture",
@@ -71,14 +70,13 @@ impl SimpleTerrainGen {
             &default_shader_key,
         );
         light_mesh.set_bind_group(1, &light_texture);
-        light_mesh.set_bind_group(2, light.get_bind_index());
+        light_mesh.set_bind_group(2, &light.get_bind_group());
 
         /* Terrain */
 
         let terrain_shader =
             Default3D::new_with_custom_topology(&window, PrimitiveTopology::TriangleList);
-        let terrain_shader_key =
-            window.add_shader(&terrain_shader, &camera, vec![light.get_layout()]);
+        let terrain_shader_key : SmartRenderPipeline = terrain_shader.build_render_pipeline(window.get_device(), vec![camera.get_layout(), light.get_layout()]).into();
 
         let pallete = ProspectTexture::image_file_from_bytes(
             "Pallete Texture",
@@ -122,8 +120,8 @@ impl SimpleTerrainGen {
         x: f32,
         z: f32,
         window: &mut ProspectWindow,
-        terrain_shader_key: ProspectShaderIndex,
-        pallete_terrain_shader: ProspectBindGroupIndex,
+        terrain_shader_key: SmartRenderPipeline,
+        pallete_terrain_shader: SmartBindGroup,
         light: &ProspectPointLight,
         shader: &impl ProspectShader,
     ) -> (Mesh, Model3D) {
@@ -131,7 +129,7 @@ impl SimpleTerrainGen {
 
         let mut main_mesh = Mesh::from_shape(&shape, window.get_device(), &terrain_shader_key);
         main_mesh.set_bind_group(1, &pallete_terrain_shader);
-        main_mesh.set_bind_group(2, light.get_bind_index());
+        main_mesh.set_bind_group(2, &light.get_bind_group());
 
         let mut model = Model3D::new(shader, window);
         model.transform.position = Vector::new3(x, 0., z);

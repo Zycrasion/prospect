@@ -2,16 +2,16 @@ use std::collections::HashMap;
 
 
 
-use wgpu::{Buffer, BufferUsages, RenderPass, Device};
+use wgpu::{Buffer, BufferUsages, RenderPass, Device, BindGroup};
 
 
+use crate::smart::{SmartRenderPipeline, SmartBindGroup};
 use crate::{prospect_shape::ProspectShape, prospect_camera::ProspectCamera};
-use crate::prospect_shader_manager::*;
 use super::{vertex::Vertex, graphics_context::GraphicsContext};
 
 pub trait Meshable
 {
-    fn draw<'life>(&'life self, render_pass : &mut RenderPass<'life>, shader_manager : &'life ProspectShaderManager, cam : &'life ProspectCamera);
+    fn draw<'life>(&'life self, render_pass : &mut RenderPass<'life>, cam : &'life ProspectCamera);
 }
 
 #[derive(Debug)]
@@ -20,13 +20,13 @@ pub struct Mesh
     vertex_buffer : Buffer,
     index_buffer : Buffer,
     index_count : u32,
-    render_pipeline : ProspectShaderIndex,
-    bind_groups : HashMap<u32, ProspectBindGroupIndex>
+    render_pipeline : SmartRenderPipeline,
+    bind_groups : HashMap<u32, SmartBindGroup>
 }
 
 impl Mesh
 {
-    pub fn from_shape<T, U>(shape : &ProspectShape<T, U>, device : &Device, pipeline : &ProspectShaderIndex) -> Self
+    pub fn from_shape<T, U>(shape : &ProspectShape<T, U>, device : &Device, pipeline : &SmartRenderPipeline) -> Self
         where   T : Into<Vec<Vertex>> + Clone,
                 U : Into<Vec<u32>> + Clone
     {
@@ -50,7 +50,7 @@ impl Mesh
         Self::new(vertices, indices, device, pipeline)
     }
 
-    pub fn new<T, U>(vertices : T, indices : U, device : &Device, pipeline : &ProspectShaderIndex) -> Self 
+    pub fn new<T, U>(vertices : T, indices : U, device : &Device, pipeline : &SmartRenderPipeline) -> Self 
         where   T : Into<Vec<Vertex>>,
                 U : Into<Vec<u32>>
     {
@@ -71,7 +71,7 @@ impl Mesh
         }
     }
 
-    pub fn set_bind_group(&mut self, loc : u32, bind_group : &ProspectBindGroupIndex)
+    pub fn set_bind_group(&mut self, loc : u32, bind_group : &SmartBindGroup)
     {
         self.bind_groups.insert(loc, bind_group.clone());
     }
@@ -79,12 +79,12 @@ impl Mesh
 
 impl Meshable for Mesh
 {
-    fn draw<'life>(&'life self, render_pass : &mut RenderPass<'life>, shader_manager : &'life ProspectShaderManager, cam : &'life ProspectCamera) {
-        shader_manager.apply_render_pipeline(&self.render_pipeline, render_pass);
+    fn draw<'life>(&'life self, render_pass : &mut RenderPass<'life>, cam : &'life ProspectCamera) {
+        self.render_pipeline.apply(render_pass);
         
         for bind_group in &self.bind_groups
         {
-            shader_manager.apply_bind_group(render_pass, &bind_group.1, *bind_group.0, &[]);
+            bind_group.1.set_bind_group(render_pass, *bind_group.0, &[]);
         }
 
         cam.bind(render_pass, 0);

@@ -5,9 +5,10 @@ use futures::channel::mpsc::{channel, Receiver};
 
 use futures::{executor, SinkExt};
 use notify::{Event, RecommendedWatcher, Config, Watcher, ReadDirectoryChangesWatcher, PollWatcher, RecursiveMode};
+use prospect::abstraction::shader::ProspectShader;
 use prospect::parse_obj;
-use prospect::prospect_shader_manager::{ProspectBindGroupIndex, ProspectShaderIndex};
-use prospect::utils::prospect_fs::{path_with_respect_to_cwd_str, path_with_respect_to_cwd};
+use prospect::smart::{SmartRenderPipeline, SmartBindGroup};
+use prospect::{utils::prospect_fs::{path_with_respect_to_cwd_str, path_with_respect_to_cwd}};
 use prospect::wgpu::{SurfaceError, Texture};
 use prospect::winit::{
     event::{ElementState, MouseButton, VirtualKeyCode},
@@ -91,10 +92,10 @@ fn watch<S: AsRef<str>>(path: S) -> notify::Result<(Receiver<Result<Event, notif
 
 pub struct ObjPreviewer {
     shader : Default3D,
-    shader_key : ProspectShaderIndex,
+    shader_key : SmartRenderPipeline,
     main_model: Model3D,
     main_mesh: Mesh,
-    texture : ProspectBindGroupIndex,
+    texture : SmartBindGroup,
     model_path: String,
     texture_path: String,
     model_rx : Receiver<Result<Event, notify::Error>>,
@@ -114,8 +115,7 @@ impl ObjPreviewer {
         light.colour = Vector::new3(1., 1., 1.);
 
         let default_shader = Default3D::new(&window);
-        let default_shader_key =
-            window.add_shader(&default_shader, &camera, vec![light.get_layout()]);
+        let default_shader_key = default_shader.build_render_pipeline(window.get_device(), vec![camera.get_layout(), light.get_layout()]).into();
 
         let model_path = std::env::args()
             .nth(1)
@@ -136,7 +136,7 @@ impl ObjPreviewer {
             &default_shader_key,
         );
         main_mesh.set_bind_group(1, &texture);
-        main_mesh.set_bind_group(2, light.get_bind_index());
+        main_mesh.set_bind_group(2, &light.get_bind_group());
         let main_model = Model3D::new(&default_shader, window);
 
         // Dispatch watcher
@@ -203,7 +203,7 @@ impl ProspectApp for ObjPreviewer {
                         &self.shader_key,
                     );
                     main_mesh.set_bind_group(1, &self.texture);
-                    main_mesh.set_bind_group(2, self.light.get_bind_index());
+                    main_mesh.set_bind_group(2, &self.light.get_bind_group());
                     self.main_mesh = main_mesh;
                 },
                 Err(a) => {
@@ -232,49 +232,7 @@ impl ProspectApp for ObjPreviewer {
     }
 
     fn process(&mut self, event: ProspectEvent, window: &mut ProspectWindow) -> ProcessResponse {
-        match event {
-            ProspectEvent::KeyboardInput(key, ElementState::Pressed) => {
-                if key == Some(VirtualKeyCode::Q) {
-                    window.lock_cursor(CursorGrabMode::None).unwrap();
-                }
-
-                if key.is_some() {
-                    self.cam_controller
-                        .key_pressed(key.expect("Unexpected None for CameraController"));
-                }
-
-                if key == Some(VirtualKeyCode::Escape) {
-                    ProcessResponse::CloseApp
-                } else {
-                    ProcessResponse::DontProcess
-                }
-            }
-            ProspectEvent::KeyboardInput(key, ElementState::Released) => {
-                if key.is_some() {
-                    self.cam_controller
-                        .key_released(key.expect("Unexpected None for CameraController"));
-                }
-
-                ProcessResponse::DontProcess
-            }
-            ProspectEvent::CursorDelta(delta) => {
-                self.cam_controller.mouse_delta(delta);
-
-                ProcessResponse::DontProcess
-            }
-            ProspectEvent::CursorMoveEvent(cursor_pos) => {
-                self.cam_controller.mouse_move_event(cursor_pos, window);
-
-                ProcessResponse::DontProcess
-            }
-            ProspectEvent::CursorClicked(state, button) => {
-                match button {
-                    MouseButton::Right => self.cam_controller.mouse_click_event(state, window),
-                    _ => {}
-                }
-                ProcessResponse::DontProcess
-            }
-            _ => ProcessResponse::ProspectProcess,
-        }
+        self.cam_controller.input_event(event, window);
+        ProcessResponse::ProspectProcess
     }
 }

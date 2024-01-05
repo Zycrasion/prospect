@@ -5,11 +5,11 @@ use prospect::{
         high_level_abstraction::HighLevelGraphicsContext,
         mesh::{Mesh, Meshable},
         prospect_window::ProspectWindow,
-        shader::BasicShader,
+        shader::{BasicShader, ProspectShader},
         vertex::Vertex, graphics_context::GraphicsContext,
     },
     prospect_app::{ProcessResponse, ProspectApp, ProspectEvent},
-    prospect_shape::ProspectShape, shaders::{textured_shader::TexturedShader, default_3d::Default3D}, prospect_camera::ProspectCamera, prospect_camera_controller::CameraController, prospect_light::ProspectPointLight, model::Model3D,
+    prospect_shape::ProspectShape, shaders::{textured_shader::TexturedShader, default_3d::Default3D}, prospect_camera::ProspectCamera, prospect_camera_controller::CameraController, prospect_light::ProspectPointLight, model::Model3D, smart::SmartRenderPipeline,
 };
 use prospect_obj::parse_obj;
 use vecto_rs::{linear::{Vector, VectorTrait}, trig::to_degrees};
@@ -59,27 +59,28 @@ impl TestApp {
         let mut light  = ProspectPointLight::new(window);
         light.position = Vector::new3(4., 4., 4.);
         light.colour   = Vector::new3(1., 1., 1.);
+        let light_bind_group = light.get_bind_group();
 
         let default_shader = Default3D::new(&window);
-        let default_shader_key = window.add_shader(&default_shader, &camera, vec![light.get_layout()]);
-
+        
         let car_texture = default_shader.register_texture("Car Texture", include_bytes!("../res/car01_Car_Pallete.png"), window);
         let light_texture = default_shader.register_texture("Light Texture", include_bytes!("../res/light.png"), window);
         let mario_texture = default_shader.register_texture("Mario Texture", include_bytes!("../res/mario.png"), window);
+        let default_pipeline : SmartRenderPipeline = default_shader.build_render_pipeline(window.get_device(), vec![camera.get_layout(), light.get_layout()]).into();
 
-        let mut car_mesh = Mesh::from_shape(&to_shape(include_str!("../res/car01.obj")), window.get_device(), &default_shader_key);
+        let mut car_mesh = Mesh::from_shape(&to_shape(include_str!("../res/car01.obj")), window.get_device(), &default_pipeline);
         car_mesh.set_bind_group(1, &car_texture);
-        car_mesh.set_bind_group(2, light.get_bind_index());
+        car_mesh.set_bind_group(2, &light_bind_group);
         let car1 = Model3D::new(&default_shader, window);
 
-        let mut mario_mesh = Mesh::from_shape(&to_shape(include_str!("../res/mario.obj")), window.get_device(), &default_shader_key);
+        let mut mario_mesh = Mesh::from_shape(&to_shape(include_str!("../res/mario.obj")), window.get_device(), &default_pipeline);
         mario_mesh.set_bind_group(1, &mario_texture);
-        mario_mesh.set_bind_group(2, light.get_bind_index());
+        mario_mesh.set_bind_group(2, &light_bind_group);
         let mario = Model3D::new(&default_shader, window);
         
-        let mut light_mesh = Mesh::from_shape(&to_shape(include_str!("../res/light.obj")), window.get_device(), &default_shader_key);
+        let mut light_mesh = Mesh::from_shape(&to_shape(include_str!("../res/light.obj")), window.get_device(), &default_pipeline);
         light_mesh.set_bind_group(1, &light_texture);
-        light_mesh.set_bind_group(2, light.get_bind_index());
+        light_mesh.set_bind_group(2, &light_bind_group);
 
         let light_model = Model3D::new(&default_shader, window);
 

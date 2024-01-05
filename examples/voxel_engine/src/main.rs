@@ -7,14 +7,12 @@ use std::{
 use noise::Perlin;
 use prospect::{
     abstraction::{
-        high_level_abstraction::HighLevelGraphicsContext, mesh::Meshable,
-        prospect_window::ProspectWindow,
+        high_level_abstraction::HighLevelGraphicsContext, prospect_window::ProspectWindow, shader::ProspectShader,
     },
     linear::{Vector, VectorTrait, vector3},
     prospect_app::{ProcessResponse, ProspectApp, ProspectEvent},
     prospect_light::ProspectPointLight,
-    prospect_texture::ProspectTexture,
-    shaders::{default_3d::Default3D, textured_shader::TexturedShader}, prospect_shader_manager::{ProspectShaderIndex, ProspectBindGroupIndex}, winit::event::{VirtualKeyCode, ElementState},
+    prospect_texture::ProspectTexture, smart::{SmartRenderPipeline, SmartBindGroup}, winit::event::{VirtualKeyCode, ElementState},
 };
 use voxel_engine::{
     chunk::{Chunk, ChunkData, CHUNK_LWH, CHUNK_SIZE, BLOCKS_PER_CHUNK, ChunkEntry, from_vector, to_vector},
@@ -38,9 +36,9 @@ pub struct VoxelEngine {
     chunk_data: Arc<Mutex<Vec<ChunkData>>>,
     chunk_remove: Arc<Mutex<Vec<ChunkEntry>>>,
     shader : VoxelShader,
-    shader_key : ProspectShaderIndex,
+    shader_key : SmartRenderPipeline,
     light : ProspectPointLight,
-    texture_index : ProspectBindGroupIndex,
+    texture_index : SmartBindGroup,
     running : Arc<Mutex<bool>>,
     thread_has_stopped : Arc<Mutex<bool>>,
     lock_player_pos : bool,
@@ -61,7 +59,7 @@ impl VoxelEngine {
         light.process_frame(window);
 
         let shader = VoxelShader::new(&window);
-        let shader_key = window.add_shader(&shader, player.get_camera(), vec![light.get_layout()]);
+        let shader_key = shader.build_render_pipeline(window.get_device(), vec![player.get_camera().get_layout(), light.get_layout()]).into();
         let texture_index = shader.bind_prospect_texture(&block_atlas, window);
 
         let noise = Perlin::new(55);

@@ -2,7 +2,7 @@ use wgpu::{
     BlendState, ColorTargetState, ColorWrites, Device, FragmentState, ShaderModule, VertexState, RenderPipeline, ShaderStages, TextureViewDimension, TextureSampleType, BindGroupLayout, BindGroup, Sampler, TextureView,
 };
 
-use crate::{abstraction::{high_level_abstraction::HighLevelGraphicsContext, shader::ProspectShader, vertex::Vertex, prospect_window::ProspectWindow, graphics_context::GraphicsContext}, prospect_shader_manager::ProspectBindGroupIndex, prospect_texture::ProspectTexture};
+use crate::{abstraction::{high_level_abstraction::HighLevelGraphicsContext, shader::ProspectShader, vertex::Vertex, prospect_window::ProspectWindow, graphics_context::GraphicsContext}, prospect_texture::ProspectTexture, smart::SmartBindGroup};
 
 #[derive(Debug)]
 pub struct TexturedShaderTexture
@@ -102,23 +102,23 @@ impl TexturedShader {
         }
     }
     
-    pub fn create_texture(&self, window : &ProspectWindow, texture : &TextureView, name : &str) -> (u32, BindGroup)
+    pub fn create_texture(&self, window : &ProspectWindow, texture : &TextureView, name : &str) -> BindGroup
     {
         let view_resource = GraphicsContext::create_texture_view_resource(0, texture);
         let sampler_resource = GraphicsContext::create_sampler_resource(1, &self.sampler);
-        (0, GraphicsContext::create_bind_group(window.get_device(), name, &self.bind_layout, &vec![view_resource, sampler_resource]))
+        GraphicsContext::create_bind_group(window.get_device(), name, &self.bind_layout, &vec![view_resource, sampler_resource])
     }
 
-    pub fn register_texture(&self, name: &str, bytes : &[u8], window: &mut ProspectWindow) -> ProspectBindGroupIndex
+    pub fn register_texture(&self, name: &str, bytes : &[u8], window: &mut ProspectWindow) -> SmartBindGroup
     {
         let texture_view = HighLevelGraphicsContext::create_texture_from_file(name, bytes, window);
         let bind_group = self.create_texture(window, &texture_view, name);
-        window.add_bind_group(name, bind_group.1)
+        bind_group.into()
     }
 
-    pub fn bind_prospect_texture(&self, prospect_texture : &ProspectTexture, window: &mut ProspectWindow) -> ProspectBindGroupIndex
+    pub fn bind_prospect_texture(&self, prospect_texture : &ProspectTexture, window: &mut ProspectWindow) -> SmartBindGroup
     {
         let bind_group = self.create_texture(window, prospect_texture.get_texture_view(), &prospect_texture.get_name());
-        window.auto_add_bind_group(bind_group.1)
+        bind_group.into()
     }  
 }

@@ -2,7 +2,7 @@
 use vecto_rs::linear::*;
 use wgpu::*;
 
-use crate::{abstraction::{graphics_context::GraphicsContext, prospect_window::ProspectWindow, high_level_abstraction::HighLevelGraphicsContext}, prospect_shader_manager::ProspectBindGroupIndex};
+use crate::{abstraction::{graphics_context::GraphicsContext, prospect_window::ProspectWindow, high_level_abstraction::HighLevelGraphicsContext}, smart::SmartBindGroup};
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable, Default)]
@@ -19,7 +19,7 @@ pub struct ProspectPointLight
 {
     pub colour : Vector,
     pub position : Vector,
-    index : ProspectBindGroupIndex,
+    bind_group : SmartBindGroup,
     buffer : Buffer,
     layout : BindGroupLayout,
 }
@@ -36,20 +36,15 @@ impl ProspectPointLight
         {
             colour : Vector::new3(1., 1., 1.),
             position : Vector::default(),
-            index: window.auto_add_bind_group(bind_group),
+            bind_group: bind_group.into(),
             buffer,
             layout,
         }
     }
 
-    pub fn copy_index(&self) -> ProspectBindGroupIndex
+    pub fn get_bind_group(&self) -> SmartBindGroup
     {
-        self.index.clone()
-    }
-
-    pub fn get_bind_index(&self) -> &ProspectBindGroupIndex
-    {
-        &self.index
+        self.bind_group.clone()
     }
 
     pub fn process_frame(&self, window : &ProspectWindow)
