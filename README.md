@@ -31,7 +31,6 @@ Cons:
 New System Ideas:
 
 ## Reference Counting
-Similar to the old system but instead of using HashMaps it uses 
 
 Main Source
 ```rust
