@@ -1,6 +1,4 @@
 use bytemuck::{Pod, Zeroable};
-
-use vecto_rs::linear::Vector;
 use wgpu::{VertexBufferLayout, VertexStepMode, VertexAttribute, VertexFormat, BufferAddress};
 
 #[derive(Clone, Copy, Pod, Zeroable)]

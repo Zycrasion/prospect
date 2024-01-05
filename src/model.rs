@@ -1,4 +1,4 @@
-use crate::{abstraction::{mesh::{Mesh, Meshable}, prospect_window::ProspectWindow, graphics_context::GraphicsContext, high_level_abstraction::HighLevelGraphicsContext, shader::ProspectShader}, prospect_transform::{Transform, TransformUniform}, prospect_camera::ProspectCamera, prospect_shader_manager::ProspectBindGroupIndex};
+use crate::{abstraction::{mesh::Meshable, prospect_window::ProspectWindow, graphics_context::GraphicsContext, high_level_abstraction::HighLevelGraphicsContext, shader::ProspectShader}, prospect_transform::{Transform, TransformUniform}, prospect_camera::ProspectCamera, prospect_shader_manager::ProspectBindGroupIndex};
 use wgpu::*;
 
 

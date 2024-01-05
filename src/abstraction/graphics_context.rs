@@ -1,7 +1,5 @@
 use bytemuck::NoUninit;
-
-
-use image::{ImageFormat, DynamicImage, ImageBuffer, Rgba, RgbaImage};
+use image::RgbaImage;
 use wgpu::*;
 
 use wgpu::util::{BufferInitDescriptor, DeviceExt};
