@@ -34,7 +34,7 @@ New System Ideas:
 
 Main Source
 ```rust
-let shader = ExampleShader::new(manager);
+let shader = ExampleShader::new();
 
 let mesh = Mesh::new(..., shader.clone())
 ```
