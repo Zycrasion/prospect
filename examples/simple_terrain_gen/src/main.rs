@@ -80,7 +80,7 @@ impl SimpleTerrainGen {
         let terrain_shader_key =
             window.add_shader(&terrain_shader, &camera, vec![light.get_layout()]);
 
-        let pallete = ProspectTexture::from_bytes(
+        let pallete = ProspectTexture::image_file_from_bytes(
             "Pallete Texture",
             include_bytes!("../res/pallete.png"),
             window,

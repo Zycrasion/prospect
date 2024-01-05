@@ -48,7 +48,7 @@ pub struct VoxelEngine {
 
 impl VoxelEngine {
     pub fn new(window: &mut ProspectWindow) -> Self {
-        let mut block_atlas = ProspectTexture::from_bytes(
+        let mut block_atlas = ProspectTexture::image_file_from_bytes(
             "BlockAtlas",
             include_bytes!("textures/block_atlas.png"),
             window,
