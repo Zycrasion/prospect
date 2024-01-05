@@ -25,9 +25,10 @@ impl ProspectShaderManager
 
     pub fn add_shader(&mut self, shader : &impl ProspectShader, device: &Device, bind_groups : Vec<&BindGroupLayout>) -> ProspectShaderIndex
     {
-        let _ = self.pipelines.insert(ProspectShaderIndex(shader.get_name().to_owned()), shader.build_render_pipeline(device, bind_groups));
+        let key = ProspectShaderIndex(shader.get_name().to_owned() + &self.pipelines.len().to_string());
+        let _ = self.pipelines.insert(key.clone(), shader.build_render_pipeline(device, bind_groups));
 
-        ProspectShaderIndex(shader.get_name().to_owned())
+        key
     }
 
     pub fn apply_render_pipeline<'a>(&'a self, key : &ProspectShaderIndex, render_pass : &mut RenderPass<'a>)

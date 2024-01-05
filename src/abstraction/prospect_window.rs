@@ -1,7 +1,5 @@
 use std::time::{SystemTime, Duration};
-
 use crate::prospect_camera::ProspectCamera;
-
 use crate::{prospect_app::ProspectApp, prospect_shader_manager::ProspectBindGroupIndex};
 use crate::prospect_shader_manager::{ProspectShaderManager, ProspectShaderIndex};
 use crate::prospect_app::*;
@@ -62,7 +60,7 @@ pub struct ProspectWindow {
             shader_manager,
             depth_texture,
             delta : 0.,
-            last_frame : SystemTime::now()
+            last_frame : SystemTime::now(),
         }
     }
 

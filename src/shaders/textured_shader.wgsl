@@ -34,5 +34,10 @@ var s_diffuse: sampler;
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32>
 {
-    return textureSample(t_diffuse, s_diffuse, in.tex_coords);
+    let output : vec4<f32> = textureSample(t_diffuse, s_diffuse, in.tex_coords);
+    if (output.a >= 0.1)
+    {
+        discard;
+    }
+    return output;
 }

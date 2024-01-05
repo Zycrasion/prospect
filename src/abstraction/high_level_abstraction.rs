@@ -93,6 +93,16 @@ impl HighLevelGraphicsContext {
     }
 
 
+    pub fn create_texture_from_bytes(name: &str, width: u32, height: u32, bytes : Vec<u8>, window: &ProspectWindow) -> Option<TextureView>
+    {
+        let texture = GraphicsContext::create_texture_raw(name, width, height, bytes, window.get_device(), window.get_queue());
+        if texture.is_err()
+        {
+            
+        }
+        Some(GraphicsContext::create_texture_view(&texture.unwrap()))
+    }
+
     pub fn create_texture_from_file(name: &str, bytes : &[u8], window: &ProspectWindow) -> TextureView
     {
         let texture = GraphicsContext::create_texture(name, bytes, window.get_device(), window.get_queue());

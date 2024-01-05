@@ -40,7 +40,17 @@ impl ProspectTexture
         }
     }
 
-    pub fn from_bytes(name : &str, contents : &[u8], window : &mut ProspectWindow) -> Self
+    pub fn from_bytes(name : &str, width : u32, height : u32,bytes : Vec<u8>, window : &mut ProspectWindow) -> Self
+    {
+        Self
+        {
+            name : name.to_string(),
+            view : HighLevelGraphicsContext::create_texture_from_bytes(name, width, height, bytes, window).unwrap()
+        }
+    }
+
+    /// Still Requires a valid image
+    pub fn image_file_from_bytes(name : &str, contents : &[u8], window : &mut ProspectWindow) -> Self
     {
         Self
         {

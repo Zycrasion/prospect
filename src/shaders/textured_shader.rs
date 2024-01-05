@@ -2,7 +2,7 @@ use wgpu::{
     BlendState, ColorTargetState, ColorWrites, Device, FragmentState, ShaderModule, VertexState, RenderPipeline, ShaderStages, TextureViewDimension, TextureSampleType, BindGroupLayout, BindGroup, Sampler, TextureView,
 };
 
-use crate::{abstraction::{high_level_abstraction::HighLevelGraphicsContext, shader::ProspectShader, vertex::Vertex, prospect_window::ProspectWindow, graphics_context::GraphicsContext}, prospect_shader_manager::ProspectBindGroupIndex};
+use crate::{abstraction::{high_level_abstraction::HighLevelGraphicsContext, shader::ProspectShader, vertex::Vertex, prospect_window::ProspectWindow, graphics_context::GraphicsContext}, prospect_shader_manager::ProspectBindGroupIndex, prospect_texture::ProspectTexture};
 
 #[derive(Debug)]
 pub struct TexturedShaderTexture
@@ -50,6 +50,32 @@ impl ProspectShader for TexturedShader {
 }
 
 impl TexturedShader {
+    pub fn new_nearest(
+        window : &ProspectWindow
+    ) -> Self {
+        let surface = window.get_surface_config();
+        let device = window.get_device();
+        let src = include_str!("textured_shader.wgsl");
+
+        let sampler = GraphicsContext::create_sampler("Textured Shader Sampler", device, Some(wgpu::FilterMode::Nearest), Some(wgpu::FilterMode::Nearest));
+        let entries = vec![
+            GraphicsContext::create_bind_group_layout_entry(0, ShaderStages::FRAGMENT, GraphicsContext::create_texture_binding_type(false, TextureViewDimension::D2, TextureSampleType::Float { filterable: true })),
+            GraphicsContext::create_bind_group_layout_entry(1, ShaderStages::FRAGMENT, GraphicsContext::create_sample_binding_type(wgpu::SamplerBindingType::Filtering))
+        ];
+        let bind_group_layout = GraphicsContext::create_bind_group_layout(device, "Textured Shader Bind Group", &entries);
+
+        Self {
+            sampler,
+            bind_layout: bind_group_layout,
+            module: GraphicsContext::load_shader("Textured Shader", src.as_ref(), device),
+            color_target_state: vec![Some(ColorTargetState {
+                format: surface.format,
+                blend: Some(BlendState::REPLACE),
+                write_mask: ColorWrites::ALL,
+            })],
+        }
+    }
+
     pub fn new(
         window : &ProspectWindow
     ) -> Self {
@@ -89,4 +115,10 @@ impl TexturedShader {
         let bind_group = self.create_texture(window, &texture_view, name);
         window.add_bind_group(name, bind_group.1)
     }
+
+    pub fn bind_prospect_texture(&self, prospect_texture : &ProspectTexture, window: &mut ProspectWindow) -> ProspectBindGroupIndex
+    {
+        let bind_group = self.create_texture(window, prospect_texture.get_texture_view(), &prospect_texture.get_name());
+        window.auto_add_bind_group(bind_group.1)
+    }  
 }

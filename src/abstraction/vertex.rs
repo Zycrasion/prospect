@@ -1,5 +1,6 @@
 use bytemuck::{Pod, Zeroable};
 
+use vecto_rs::linear::Vector;
 use wgpu::{VertexBufferLayout, VertexStepMode, VertexAttribute, VertexFormat, BufferAddress};
 
 #[derive(Clone, Copy, Pod, Zeroable)]
@@ -34,4 +35,34 @@ impl Vertex
             },
         ],
     };
+}
+
+pub fn vertpos(x : f32, y : f32, z : f32) -> Vertex
+{
+    Vertex
+    {
+        position : [x, y, z],
+        uv : [0.; 2],
+        normal : [0.; 3]
+    }
+}
+
+pub fn vertposuv(x : f32, y : f32, z : f32, u : f32, v : f32) -> Vertex
+{
+    Vertex
+    {
+        position : [x, y, z],
+        uv : [u, v],
+        normal : [0.; 3]
+    }
+}
+
+pub fn vert(x : f32, y : f32, z : f32, u : f32, v : f32, nx : f32, ny : f32, nz : f32) -> Vertex
+{
+    Vertex
+    {
+        position : [x, y, z],
+        uv : [u, v],
+        normal : [nx, ny, nz]
+    }
 }

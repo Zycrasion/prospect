@@ -19,7 +19,7 @@ impl Model3D
         Model3D { transform: Transform::new(), bind_group, matrix_buffer }
     }
 
-    pub fn draw<'a>(&self, render_pass : &mut RenderPass<'a>, window : &'a ProspectWindow, cam : &'a ProspectCamera, mesh : &'a Mesh)
+    pub fn draw<'a>(&self, render_pass : &mut RenderPass<'a>, window : &'a ProspectWindow, cam : &'a ProspectCamera, mesh : &'a impl Meshable)
     {
         let data = self.transform.generate_matrix();
         GraphicsContext::update_buffer(window.get_queue(), &self.matrix_buffer, 0, &[data]);
@@ -27,7 +27,7 @@ impl Model3D
         mesh.draw(render_pass, window.get_shader_manager(), cam);
     }
 
-    pub fn draw_custom_bind_index<'a>(&self, render_pass : &mut RenderPass<'a>, window : &'a ProspectWindow, cam : &'a ProspectCamera, mesh : &'a Mesh, index : u32)
+    pub fn draw_custom_bind_index<'a>(&self, render_pass : &mut RenderPass<'a>, window : &'a ProspectWindow, cam : &'a ProspectCamera, mesh : &'a impl Meshable, index : u32)
     {
         let data = self.transform.generate_matrix();
         GraphicsContext::update_buffer(window.get_queue(), &self.matrix_buffer, 0, &[data]);

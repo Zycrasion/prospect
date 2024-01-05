@@ -1,6 +1,7 @@
 use bytemuck::NoUninit;
 
 
+use image::{ImageFormat, DynamicImage, ImageBuffer, Rgba, RgbaImage};
 use wgpu::*;
 
 use wgpu::util::{BufferInitDescriptor, DeviceExt};
@@ -275,9 +276,25 @@ impl GraphicsContext {
         queue.write_buffer(buffer, offset, bytemuck::cast_slice(data))
     }
 
+    pub fn create_texture_raw(label: &str, width: u32, height: u32, bytes: Vec<u8>, device: &Device, queue: &Queue) -> Result<Texture, ()> {
+        let img = RgbaImage::from_vec(width, height, bytes);
+        if img.is_none()
+        {
+            return Err(());
+        }
+        let img = img.unwrap();
+        Ok(GraphicsContext::create_texture_from_image(label, img, device, queue))
+    }
+
     pub fn create_texture(label: &str, bytes: &[u8], device: &Device, queue: &Queue) -> Texture {
         let img = image::load_from_memory(bytes).unwrap();
         let raw = img.to_rgba8();
+        
+        GraphicsContext::create_texture_from_image(label, raw, device, queue)
+    }
+
+    pub fn create_texture_from_image(label: &str, raw : RgbaImage, device: &Device, queue: &Queue) -> Texture
+    {
         let dimensions = raw.dimensions();
 
         let size = Extent3d {
