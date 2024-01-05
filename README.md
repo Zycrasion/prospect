@@ -30,7 +30,10 @@ Cons:
 
 New System Ideas:
 
+It should reduce the load on the end user, making it easier to read.
+
 ## Reference Counting
+Interior Reference Counting
 
 Main Source
 ```rust
@@ -73,26 +76,59 @@ Pros:
 - No Abstractions in the middle of Hashing that hurt peformance
 - Lighter Weight
 - Easily Clonable
-- 
+- Should decrease startup times
+- Super Readable
+- Cleaner Code
 
 Cons:
 - Textures are not mutable, however they could be with mutexes (```Rc<Mutex<BindGroup>>```)
 
-Other Suggestions to this?
+To address cons it could also be changed to 
 
 Maybe something like
 
+User code
 ```rust
+let shader = ShaderExample::new();
+
+// In Theory you dont even need to have a mutable reference to shader to change the texture due to Mutexes Interior Mutabality
+shader.change_texture_to(another_image);
+
+let mesh = Mesh::new(shader.clone());
+```
+
+Abstractions
+```rust
+
+pub struct ShaderExample
+{
+    render_pipeline : SmartRenderPipeline,
+    texture : SmartBindGroup
+}
+
 #[derive(Clone, Debug)]
 pub struct SmartBindGroup
 {
     inner : Rc<Mutex<BindGroup>>
 }
 
+impl SmartBindGroup
+{
+    /// Haven't Checked the validity that this has, but looks good in concept
+    pub fn change(&mut self, to : BindGroup)
+    {
+        let handle = self.inner.lock();
+        if let Some(mut handle) = handle
+        {
+            *handle = to;
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct SmartRenderPipeline
 {
-    inner : Rc<Mutex<RenderPipeline>>
+    inner : Rc<RenderPipeline> // Would probably be wise to not make this Mutable
 }
 ```
 
