@@ -1,6 +1,7 @@
 use bytemuck::NoUninit;
 use image::RgbaImage;
 use wgpu::*;
+use wgpu::core::*;
 
 use wgpu::util::{BufferInitDescriptor, DeviceExt};
 use winit::{
@@ -35,6 +36,8 @@ impl GraphicsContext {
         Instance::new(InstanceDescriptor {
             backends,
             dx12_shader_compiler,
+            flags : InstanceFlags::default(),
+            gles_minor_version : Gles3MinorVersion::Automatic
         })
     }
 
@@ -150,14 +153,16 @@ impl GraphicsContext {
                         b: clear_color.2,
                         a: clear_color.3,
                     }),
-                    store: true,
+                    store: StoreOp::Store,
                 },
             })],
             depth_stencil_attachment: Some(RenderPassDepthStencilAttachment {
                 view: depth_view,
-                depth_ops: Some(Operations { load: LoadOp::Clear(1.0), store: true }),
+                depth_ops: Some(Operations { load: LoadOp::Clear(1.0), store: StoreOp::Store }),
                 stencil_ops: None,
             }),
+            timestamp_writes: None,
+            occlusion_query_set: None,
         })
     }
 
@@ -417,14 +422,14 @@ impl GraphicsContext {
         }
     }
 
-    pub fn create_bind_group_layout(
+    pub fn create_bind_group_layout<V : AsRef<[BindGroupLayoutEntry]>>(
         device: &Device,
         label: &str,
-        entries: &Vec<BindGroupLayoutEntry>,
+        entries: V,
     ) -> BindGroupLayout {
         device.create_bind_group_layout(&BindGroupLayoutDescriptor {
             label: Some(label),
-            entries: &entries,
+            entries: &entries.as_ref(),
         })
     }
 

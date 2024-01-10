@@ -10,7 +10,7 @@ pub struct TransformUniform
     model_matrix : [f32; 4 * 4],
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Transform
 {
     pub position : Vector,

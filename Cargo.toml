@@ -18,7 +18,7 @@ log = "0.4.20"
 pollster = "0.3.0"
 prospect-obj = { git = "https://github.com/Zycrasion/prospect-obj", version = "0.*" }
 vecto-rs = { git = "https://github.com/Zycrasion/vecto-rs", version = "2.*" }
-wgpu = "0.17.1"
+wgpu = "0.18.*"
 winit = "0.28.7"
 
 [profile.dev.package."*"]

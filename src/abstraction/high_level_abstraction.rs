@@ -116,6 +116,13 @@ impl HighLevelGraphicsContext {
         bind_group
     }
 
+    pub fn create_uniform_from_buffers(device : &Device, label : &str, buffers : &Vec<Buffer>, bind_group_layout : &BindGroupLayout) -> BindGroup
+    {
+        let bind_group_entries = buffers.iter().map(|buffer|  GraphicsContext::create_bind_group_entry(0, buffer.as_entire_binding())).collect();
+        let bind_group = GraphicsContext::create_bind_group(&device, label, bind_group_layout, &bind_group_entries);
+        bind_group
+    }
+
     pub fn create_uniform_and_bind_group(device : &Device, label : &str, stage : ShaderStages, buffer : &Buffer) -> (BindGroupLayout, BindGroup)
     {
         let bind_group_layout_entry = GraphicsContext::create_bind_group_layout_entry(0, stage, GraphicsContext::create_uniform_binding_type());
