@@ -10,6 +10,7 @@ pub mod prospect_transform;
 pub mod model;
 pub mod prospect_texture;
 pub mod smart;
+pub mod prospect_framebuffer;
 
 // Re-exports
 pub use wgpu;

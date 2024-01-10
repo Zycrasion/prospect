@@ -21,7 +21,7 @@ impl HighLevelGraphicsContext {
         let (event_loop, window) = GraphicsContext::create_window(title, width, height);
 
         let size = window.inner_size();
-        let instance = GraphicsContext::create_instance(Backends::all(), Default::default());
+        let instance = GraphicsContext::create_instance(Backends::PRIMARY /* At the moment DX11 and OpenGL don't work. I haven't tested web builds */, Default::default());
 
         let surface = GraphicsContext::create_surface(&window, &instance)
             .expect("Error when creating surface for ProspectWindow");

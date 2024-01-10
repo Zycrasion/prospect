@@ -2,7 +2,7 @@ use wgpu::{
     BlendState, ColorTargetState, ColorWrites, Device, FragmentState, ShaderModule, VertexState, RenderPipeline, ShaderStages, TextureViewDimension, TextureSampleType, BindGroupLayout, BindGroup, Sampler, TextureView,
 };
 
-use crate::{abstraction::{high_level_abstraction::HighLevelGraphicsContext, shader::ProspectShader, vertex::Vertex, prospect_window::ProspectWindow, graphics_context::GraphicsContext}, prospect_texture::ProspectTexture, smart::SmartBindGroup};
+use crate::{abstraction::{high_level_abstraction::HighLevelGraphicsContext, shader::ProspectShader, vertex::Vertex, prospect_window::ProspectWindow, graphics_context::GraphicsContext}, prospect_texture::{ProspectTexture, BindableTexture}, smart::SmartBindGroup};
 
 #[derive(Debug)]
 pub struct TexturedShaderTexture
@@ -116,7 +116,7 @@ impl TexturedShader {
         bind_group.into()
     }
 
-    pub fn bind_prospect_texture(&self, prospect_texture : &ProspectTexture, window: &mut ProspectWindow) -> SmartBindGroup
+    pub fn bind_prospect_texture<T : BindableTexture>(&self, prospect_texture : &T, window: &mut ProspectWindow) -> SmartBindGroup
     {
         let bind_group = self.create_texture(window, prospect_texture.get_texture_view(), &prospect_texture.get_name());
         bind_group.into()

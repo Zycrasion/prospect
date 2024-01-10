@@ -2,7 +2,7 @@ use wgpu::{
     BlendState, ColorTargetState, ColorWrites, Device, FragmentState, ShaderModule, VertexState, RenderPipeline, ShaderStages, TextureViewDimension, TextureSampleType, BindGroupLayout, BindGroup, Sampler, TextureView, PrimitiveTopology,
 };
 
-use crate::{abstraction::{shader::ProspectShader, vertex::Vertex, high_level_abstraction::HighLevelGraphicsContext, prospect_window::ProspectWindow, graphics_context::GraphicsContext}, prospect_texture::ProspectTexture, smart::SmartBindGroup};
+use crate::{abstraction::{shader::ProspectShader, vertex::Vertex, high_level_abstraction::HighLevelGraphicsContext, prospect_window::ProspectWindow, graphics_context::GraphicsContext}, prospect_texture::{ProspectTexture, BindableTexture}, smart::SmartBindGroup};
 
 pub struct Default3D {
     module: ShaderModule,
@@ -109,7 +109,7 @@ impl Default3D {
         bind_group.into()
     }
 
-    pub fn bind_prospect_texture(&self, prospect_texture : &ProspectTexture, window: &mut ProspectWindow) -> SmartBindGroup
+    pub fn bind_prospect_texture<T : BindableTexture>(&self, prospect_texture : &T, window: &mut ProspectWindow) -> SmartBindGroup
     {
         let bind_group = self.create_texture(window, prospect_texture.get_texture_view(), &prospect_texture.get_name());
         bind_group.into()

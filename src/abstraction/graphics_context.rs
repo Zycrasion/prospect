@@ -1,7 +1,6 @@
 use bytemuck::NoUninit;
 use image::RgbaImage;
 use wgpu::*;
-use wgpu::core::*;
 
 use wgpu::util::{BufferInitDescriptor, DeviceExt};
 use winit::{
@@ -9,6 +8,8 @@ use winit::{
     event_loop::EventLoop,
     window::{Window, WindowBuilder},
 };
+
+use crate::prospect_texture::ProspectTexture;
 
 pub struct GraphicsContext;
 
@@ -36,8 +37,8 @@ impl GraphicsContext {
         Instance::new(InstanceDescriptor {
             backends,
             dx12_shader_compiler,
-            flags : InstanceFlags::default(),
-            gles_minor_version : Gles3MinorVersion::Automatic
+            flags: InstanceFlags::default(),
+            gles_minor_version: Gles3MinorVersion::Automatic,
         })
     }
 
@@ -158,7 +159,10 @@ impl GraphicsContext {
             })],
             depth_stencil_attachment: Some(RenderPassDepthStencilAttachment {
                 view: depth_view,
-                depth_ops: Some(Operations { load: LoadOp::Clear(1.0), store: StoreOp::Store }),
+                depth_ops: Some(Operations {
+                    load: LoadOp::Clear(1.0),
+                    store: StoreOp::Store,
+                }),
                 stencil_ops: None,
             }),
             timestamp_writes: None,
@@ -222,7 +226,7 @@ impl GraphicsContext {
         })
     }
 
-    pub const DEFAULT_PRIMITIVE_STATE : PrimitiveState = PrimitiveState {
+    pub const DEFAULT_PRIMITIVE_STATE: PrimitiveState = PrimitiveState {
         topology: PrimitiveTopology::TriangleList,
         strip_index_format: None,
         front_face: FrontFace::Ccw,
@@ -238,7 +242,7 @@ impl GraphicsContext {
         fragment_state: FragmentState,
         vertex_state: VertexState,
         device: &Device,
-        primitive_state : PrimitiveState,
+        primitive_state: PrimitiveState,
     ) -> RenderPipeline {
         device.create_render_pipeline(&RenderPipelineDescriptor {
             label: Some(name),
@@ -279,25 +283,37 @@ impl GraphicsContext {
         queue.write_buffer(buffer, offset, bytemuck::cast_slice(data))
     }
 
-    pub fn create_texture_raw(label: &str, width: u32, height: u32, bytes: Vec<u8>, device: &Device, queue: &Queue) -> Result<Texture, ()> {
+    pub fn create_texture_raw(
+        label: &str,
+        width: u32,
+        height: u32,
+        bytes: Vec<u8>,
+        device: &Device,
+        queue: &Queue,
+    ) -> Result<Texture, ()> {
         let img = RgbaImage::from_vec(width, height, bytes);
-        if img.is_none()
-        {
+        if img.is_none() {
             return Err(());
         }
         let img = img.unwrap();
-        Ok(GraphicsContext::create_texture_from_image(label, img, device, queue))
+        Ok(GraphicsContext::create_texture_from_image(
+            label, img, device, queue,
+        ))
     }
 
     pub fn create_texture(label: &str, bytes: &[u8], device: &Device, queue: &Queue) -> Texture {
         let img = image::load_from_memory(bytes).unwrap();
         let raw = img.to_rgba8();
-        
+
         GraphicsContext::create_texture_from_image(label, raw, device, queue)
     }
 
-    pub fn create_texture_from_image(label: &str, raw : RgbaImage, device: &Device, queue: &Queue) -> Texture
-    {
+    pub fn create_texture_from_image(
+        label: &str,
+        raw: RgbaImage,
+        device: &Device,
+        queue: &Queue,
+    ) -> Texture {
         let dimensions = raw.dimensions();
 
         let size = Extent3d {
@@ -422,7 +438,7 @@ impl GraphicsContext {
         }
     }
 
-    pub fn create_bind_group_layout<V : AsRef<[BindGroupLayoutEntry]>>(
+    pub fn create_bind_group_layout<V: AsRef<[BindGroupLayoutEntry]>>(
         device: &Device,
         label: &str,
         entries: V,
@@ -490,6 +506,77 @@ impl GraphicsContext {
             usage: TextureUsages::RENDER_ATTACHMENT | TextureUsages::TEXTURE_BINDING,
             view_formats: &[],
         };
+        let texture = device.create_texture(&desc);
+
+        let view = GraphicsContext::create_texture_view(&texture);
+        let sampler = GraphicsContext::create_sampler_advanced(
+            label,
+            device,
+            Some(FilterMode::Linear),
+            Some(FilterMode::Linear),
+            Some(FilterMode::Nearest),
+            Some(CompareFunction::LessEqual),
+            None,
+            None,
+        );
+
+        (texture, view, sampler)
+    }
+
+    pub fn create_framebuffer(
+        device: &Device,
+        label: &str,
+        width: u32,
+        height: u32,
+    ) -> (Texture, TextureView, Sampler) {
+        let size = Extent3d {
+            width,
+            height,
+            depth_or_array_layers: 1,
+        };
+
+        let desc = TextureDescriptor {
+            label: Some(label),
+            size,
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: TextureDimension::D2,
+            format: TextureFormat::Bgra8UnormSrgb,
+            usage: TextureUsages::RENDER_ATTACHMENT | TextureUsages::TEXTURE_BINDING,
+            view_formats: &[],
+        };
+
+        let texture = device.create_texture(&desc);
+
+        let view = GraphicsContext::create_texture_view(&texture);
+        let sampler = GraphicsContext::create_sampler(label, device, None, None);
+
+        (texture, view, sampler)
+    }
+
+    pub fn create_framebuffer_depth(
+        device: &Device,
+        label: &str,
+        width: u32,
+        height: u32,
+    ) -> (Texture, TextureView, Sampler) {
+        let size = Extent3d {
+            width,
+            height,
+            depth_or_array_layers: 1,
+        };
+
+        let desc = TextureDescriptor {
+            label: Some(label),
+            size,
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: TextureDimension::D2,
+            format: Self::DEPTH_FORMAT,
+            usage: TextureUsages::RENDER_ATTACHMENT | TextureUsages::TEXTURE_BINDING | TextureUsages::COPY_SRC,
+            view_formats: &[],
+        };
+
         let texture = device.create_texture(&desc);
 
         let view = GraphicsContext::create_texture_view(&texture);

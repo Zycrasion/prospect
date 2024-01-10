@@ -2,6 +2,12 @@ use wgpu::*;
 
 use crate::{utils::prospect_fs::read_file_option, abstraction::{high_level_abstraction::HighLevelGraphicsContext, prospect_window::ProspectWindow}};
 
+pub trait BindableTexture
+{
+    fn get_texture_view(&self) -> &TextureView;
+    fn get_name(&self) -> String;
+}
+
 pub struct ProspectTexture
 {
     name : String,
@@ -63,9 +69,17 @@ impl ProspectTexture
     {   
         self.name.clone()
     }
+}
 
-    pub fn get_texture_view(&self) -> &TextureView
+impl BindableTexture for ProspectTexture
+{
+    fn get_texture_view(&self) -> &TextureView
     {
         &self.view
+    }
+
+    fn get_name(&self) -> String
+    {
+        self.name.clone()
     }
 }
