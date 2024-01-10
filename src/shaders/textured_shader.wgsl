@@ -35,7 +35,7 @@ var s_diffuse: sampler;
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32>
 {
     let output : vec4<f32> = textureSample(t_diffuse, s_diffuse, in.tex_coords);
-    if (output.a >= 0.1)
+    if (output.a <= 0.9)
     {
         discard;
     }
